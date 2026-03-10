@@ -51,11 +51,12 @@ const LS = {
 // ════════════════════════════════════════════════════════════════
 let State = {
   allQuestions:    [],      // Full fetched dataset
-  dailyCards:      [],      // Today's 10 question objects
-  currentIndex:    0,       // Which card we're on (0–9)
-  isFlipped:       false,   // Is current card showing answer?
+  dailyCards:      [],      // Questions filtered by active subject
+  currentIndex:    0,       // Current card index
+  isFlipped:       false,   // Is card showing answer?
   sessionSaved:    0,       // Saved this session
   sessionSkipped:  0,       // Skipped this session
+  activeSubject:   null,    // null = show subject picker
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -73,10 +74,16 @@ function _cacheDom() {
     // Header
     headerStreak:      document.getElementById('header-streak'),
 
-    // Daily progress
+    // Daily progress (in card area topbar)
     dailyCount:        document.getElementById('daily-count'),
     dailyProgressFill: document.getElementById('daily-progress-fill'),
-    currentCategory:   document.getElementById('current-category'),
+    activeSubjectName: document.getElementById('active-subject-name'),
+
+    // Subject picker
+    subjectPicker:     document.getElementById('subject-picker'),
+    subjectGrid:       document.getElementById('subject-grid'),
+    cardArea:          document.getElementById('card-area'),
+    btnBackSubjects:   document.getElementById('btn-back-subjects'),
 
     // Card elements
     cardArena:         document.getElementById('card-arena'),
@@ -484,10 +491,10 @@ function loadNextCard() {
   State.currentIndex++;
   ls_set(LS.DAILY_INDEX, State.currentIndex);
 
-  // When queue is exhausted, reshuffle all questions and keep going
+  // When subject deck is exhausted — reshuffle and keep going
   if (State.currentIndex >= State.dailyCards.length) {
-    showToast('🔄 Great job! Reshuffling…');
-    State.dailyCards  = selectDailyCards(State.allQuestions);
+    showToast('🔄 All done! Reshuffling…');
+    State.dailyCards  = shuffle([...State.dailyCards]);
     State.currentIndex = 0;
     ls_set(LS.DAILY_INDEX, 0);
   }
@@ -554,16 +561,26 @@ function _renderCard(question) {
 
   // Fill content
   const cardNum = State.currentIndex + 1;
-  if (DOM.cardNumber)        DOM.cardNumber.textContent        = `Q${cardNum}`;
-  if (DOM.cardQuestion)      DOM.cardQuestion.textContent      = question.question;
-  if (DOM.cardAnswer)        DOM.cardAnswer.textContent        = question.answer;
-  if (DOM.cardQuestionRepeat)DOM.cardQuestionRepeat.textContent = question.question;
-  if (DOM.currentCategory)   DOM.currentCategory.textContent  = question.category;
+  if (DOM.cardNumber)         DOM.cardNumber.textContent         = `Q${cardNum}`;
+  if (DOM.cardQuestion)       DOM.cardQuestion.textContent       = question.question;
+  if (DOM.cardAnswer)         DOM.cardAnswer.textContent         = question.answer;
+  if (DOM.cardQuestionRepeat) DOM.cardQuestionRepeat.textContent = question.question;
+
+  // Show swipe guide on very first card ever
+  if (!ls_get(LS.GUIDE_SHOWN)) {
+    DOM.swipeGuide?.classList.remove('hidden');
+    setTimeout(() => {
+      ls_set(LS.GUIDE_SHOWN, true);
+      DOM.swipeGuide?.classList.add('hidden');
+    }, 4000);
+  } else {
+    DOM.swipeGuide?.classList.add('hidden');
+  }
 
   // Animate card entrance
   if (card) {
-    card.style.opacity   = '0';
-    card.style.transform = 'translateY(30px) scale(0.95)';
+    card.style.opacity    = '0';
+    card.style.transform  = 'translateY(30px) scale(0.95)';
     card.style.transition = 'none';
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -573,7 +590,7 @@ function _renderCard(question) {
       });
     });
 
-    // Re-init swipe engine on each card
+    // Re-init swipe engine
     SwipeEngine.destroy();
     setTimeout(() => {
       SwipeEngine.init(card, {
@@ -582,11 +599,11 @@ function _renderCard(question) {
         up:    DOM.overlayUp,
         down:  DOM.overlayDown,
       }, {
-        onSwipeDown:  () => _flipCard(),                 // ↓ reveal answer
-        onSwipeUp:    () => _handleSkip(question),       // ↑ skip
-        onSwipeRight: () => _handleSkip(question),       // → skip
-        onSwipeLeft:  () => _handleSkip(question),       // ← skip
-        onTap:        () => _flipCard(),                 // tap = also reveal
+        onSwipeDown:  () => _flipCard(),
+        onSwipeUp:    () => _handleSkip(question),
+        onSwipeRight: () => _handleSkip(question),
+        onSwipeLeft:  () => _handleSkip(question),
+        onTap:        () => _flipCard(),
       });
     }, 400);
   }
@@ -636,11 +653,10 @@ function _handleSave(question) {
 function _updateDailyProgress() {
   const total   = State.dailyCards.length;
   const current = State.currentIndex + 1;
-  const pct     = Math.round(((State.currentIndex) / total) * 100);
+  const pct     = Math.round((State.currentIndex / Math.max(total, 1)) * 100);
 
-  // Show "Card X of Y (total remaining)"
   if (DOM.dailyCount)
-    DOM.dailyCount.textContent = `Card ${current} of ${total}`;
+    DOM.dailyCount.textContent = `${current} / ${total}`;
   if (DOM.dailyProgressFill)
     DOM.dailyProgressFill.style.width = `${pct}%`;
 }
@@ -670,6 +686,137 @@ function _showCompletion() {
 //  TAB NAVIGATION
 // ════════════════════════════════════════════════════════════════
 
+// ════════════════════════════════════════════════════════════════
+//  SUBJECT PICKER
+// ════════════════════════════════════════════════════════════════
+
+// Emoji icons per subject keyword (fallback = 📚)
+const SUBJECT_ICONS = {
+  'soil':        '🌱', 'agronomy':    '🌾', 'horticulture':'🍎',
+  'crop':        '🌿', 'plant':       '🪴', 'seed':        '🌰',
+  'irrigation':  '💧', 'water':       '💧', 'weather':     '🌤',
+  'climate':     '🌍', 'environment': '🌿', 'ecology':     '🐾',
+  'animal':      '🐄', 'livestock':   '🐄', 'veterinary':  '🩺',
+  'dairy':       '🥛', 'poultry':     '🐓', 'fishery':     '🐟',
+  'fish':        '🐟', 'aqua':        '🐠', 'economic':    '📈',
+  'economy':     '📈', 'finance':     '💰', 'market':      '🏪',
+  'policy':      '📋', 'scheme':      '📋', 'government':  '🏛',
+  'polity':      '🏛', 'science':     '🔬', 'technology':  '💻',
+  'defence':     '🛡', 'military':    '🛡', 'geography':   '🗺',
+  'history':     '📜', 'education':   '🎓', 'transport':   '🚆',
+  'health':      '🏥', 'disease':     '🦠', 'nutrition':   '🥗',
+  'food':        '🍱', 'survey':      '📊', 'statistics':  '📊',
+  'extension':   '📡', 'research':    '🔭', 'general':     '📚',
+  'all':         '⚡',
+};
+
+function _subjectIcon(name) {
+  const lower = name.toLowerCase();
+  for (const [key, icon] of Object.entries(SUBJECT_ICONS)) {
+    if (lower.includes(key)) return icon;
+  }
+  return '📚';
+}
+
+// Cycle of accent colours for variety
+const SUBJECT_COLORS = [
+  '#00E5FF','#00E676','#FFAB00','#FF5252',
+  '#7C4DFF','#FF6D00','#00BCD4','#69F0AE',
+  '#FF4081','#40C4FF','#B2FF59','#FFD740',
+];
+
+function renderSubjectPicker() {
+  const grid = DOM.subjectGrid;
+  if (!grid) return;
+  grid.innerHTML = '';
+
+  // Get unique categories and count questions per category
+  const counts = {};
+  State.allQuestions.forEach(q => {
+    const cat = q.category || 'General';
+    counts[cat] = (counts[cat] || 0) + 1;
+  });
+
+  const subjects = Object.keys(counts).sort();
+
+  // "All Subjects" card first
+  const allCard = _makeSubjectCard(
+    'All Subjects', State.allQuestions.length,
+    '⚡', '#00E5FF', true
+  );
+  allCard.addEventListener('click', () => selectSubject('__ALL__'));
+  grid.appendChild(allCard);
+
+  // One card per subject
+  subjects.forEach((subject, i) => {
+    const color = SUBJECT_COLORS[i % SUBJECT_COLORS.length];
+    const icon  = _subjectIcon(subject);
+    const card  = _makeSubjectCard(subject, counts[subject], icon, color, false);
+    card.addEventListener('click', () => selectSubject(subject));
+    grid.appendChild(card);
+  });
+}
+
+function _makeSubjectCard(name, count, icon, color, isAll) {
+  const el = document.createElement('div');
+  el.className = 'subject-card' + (isAll ? ' all-card' : '');
+  el.style.setProperty('--card-accent', color);
+  el.innerHTML = `
+    <div class="subject-card-icon">${icon}</div>
+    <div class="subject-card-name">${_escHtml(name)}</div>
+    <div class="subject-card-count">${count} question${count !== 1 ? 's' : ''}</div>
+  `;
+  return el;
+}
+
+function selectSubject(subject) {
+  TG.Haptic.medium();
+  State.activeSubject = subject;
+  State.currentIndex  = 0;
+  State.sessionSaved  = 0;
+  State.sessionSkipped = 0;
+
+  // Filter questions
+  const pool = subject === '__ALL__'
+    ? shuffle([...State.allQuestions])
+    : shuffle(State.allQuestions.filter(
+        q => q.category === subject
+      ));
+
+  if (pool.length === 0) {
+    showToast('No questions found for this subject');
+    return;
+  }
+
+  State.dailyCards = pool;
+
+  // Update subject name label
+  if (DOM.activeSubjectName)
+    DOM.activeSubjectName.textContent =
+      subject === '__ALL__' ? 'All Subjects' : subject;
+
+  // Show card area, hide picker
+  DOM.subjectPicker?.classList.add('hidden');
+  DOM.cardArea?.classList.remove('hidden');
+
+  _updateDailyProgress();
+  _renderCard(State.dailyCards[0]);
+}
+
+function showSubjectPicker() {
+  // Stop any active swipe session
+  SwipeEngine.destroy();
+  State.activeSubject = null;
+  State.currentIndex  = 0;
+
+  DOM.cardArea?.classList.add('hidden');
+  DOM.subjectPicker?.classList.remove('hidden');
+
+  // Re-render so counts are fresh
+  renderSubjectPicker();
+  TG.Haptic.select();
+}
+
 function _initTabs() {
   const tabs = [
     { btn: DOM.tabHome,     view: DOM.viewHome,     id: 'home' },
@@ -688,6 +835,7 @@ function _initTabs() {
       view?.classList.add('active');
       TG.Haptic.select();
 
+      if (id === 'home')     showSubjectPicker();
       if (id === 'saved')    renderSavedTab();
       if (id === 'progress') renderProgressTab();
     });
@@ -874,6 +1022,11 @@ function _initAds() {
 // ════════════════════════════════════════════════════════════════
 
 function _initButtons() {
+  // ── Back to subject picker ──────────────────────────────────
+  DOM.btnBackSubjects?.addEventListener('click', () => {
+    showSubjectPicker();
+  });
+
   DOM.btnSkip?.addEventListener('click', () => {
     const q = State.dailyCards[State.currentIndex];
     if (!q) return;
@@ -978,19 +1131,7 @@ async function boot() {
   // 2. Init Telegram
   TG.init();
 
-  // 3. Show swipe guide if first time
-  if (!ls_get(LS.GUIDE_SHOWN)) {
-    DOM.swipeGuide?.classList.remove('hidden');
-    // Auto-hide after 5 seconds
-    setTimeout(() => {
-      ls_set(LS.GUIDE_SHOWN, true);
-      DOM.swipeGuide?.classList.add('hidden');
-    }, 5000);
-  } else {
-    DOM.swipeGuide?.classList.add('hidden');
-  }
-
-  // 4. Fetch questions with loading progress
+  // 3. Fetch questions
   let allQuestions;
   try {
     allQuestions = await fetchQuestions();
@@ -1001,39 +1142,34 @@ async function boot() {
 
   State.allQuestions = allQuestions;
 
-  // 5. Select cards (all questions, shuffled)
-  State.dailyCards   = selectDailyCards(allQuestions);
-  State.currentIndex = ls_get(LS.DAILY_INDEX, 0);
-
-  // ── FIX: if index is stale/out-of-range, reset to start ──────
-  if (State.currentIndex >= State.dailyCards.length || State.currentIndex < 0) {
-    State.currentIndex = 0;
-    ls_set(LS.DAILY_INDEX, 0);
-  }
-
-  // 6. Update initial stats/streak
+  // 4. Update stats/streak
   _updateStats();
 
-  // 7. Update saved badge
+  // 5. Update saved badge
   const saved = ls_get(LS.SAVED, []);
   _updateSavedBadge(saved.length);
 
-  // 8. Init UI
+  // 6. Init tabs and buttons
   _initTabs();
   _initButtons();
-  _updateDailyProgress();
 
-  // 9. Dismiss splash
+  // 7. Dismiss splash
   await _delay(600);
-
   DOM.splash?.classList.add('fade-out');
   setTimeout(() => {
     DOM.splash?.classList.add('hidden');
     DOM.app?.classList.remove('hidden');
   }, 500);
 
-  // 10. Always render first card (no completion screen in unlimited mode)
-  _renderCard(State.dailyCards[State.currentIndex]);
+  // 8. Show subject picker (card area hidden by default)
+  DOM.cardArea?.classList.add('hidden');
+  DOM.subjectPicker?.classList.remove('hidden');
+  renderSubjectPicker();
+
+  // 9. Show swipe guide when first card is opened
+  if (!ls_get(LS.GUIDE_SHOWN)) {
+    // guide shown inside selectSubject → _renderCard flow
+  }
 }
 
 // ── Wait for DOM ──────────────────────────────────────────────
