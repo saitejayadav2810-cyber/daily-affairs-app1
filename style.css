@@ -306,37 +306,195 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   HOME TAB — CARD AREA
+   SUBJECT PICKER
 ═══════════════════════════════════════════════════════════════ */
+#subject-picker {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
 
-/* Daily progress strip */
-.daily-strip {
-  padding: 12px 20px 0;
+#card-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+#card-area.hidden { display: none !important; }
+#subject-picker.hidden { display: none !important; }
+
+.subject-header {
+  padding: 20px 20px 12px;
   flex-shrink: 0;
 }
 
-.daily-info {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
+.subject-title {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
 }
 
-.daily-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 1px;
+.subject-sub {
+  font-size: 13px;
   color: var(--text-muted);
+  margin-top: 4px;
 }
 
-.daily-count {
+.subject-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  padding: 4px 16px 16px;
+}
+
+/* "All Subjects" card takes full width */
+.subject-card.all-card {
+  grid-column: 1 / -1;
+}
+
+.subject-card {
+  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  padding: 18px 14px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.subject-card:active {
+  transform: scale(0.96);
+  border-color: var(--cyan);
+  background: var(--cyan-dim);
+}
+
+.subject-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: var(--card-accent, var(--cyan));
+  border-radius: 2px 2px 0 0;
+}
+
+.subject-card.all-card::before {
+  background: linear-gradient(90deg, var(--cyan), #3d5afe);
+}
+
+.subject-card-icon {
+  font-size: 26px;
+  line-height: 1;
+}
+
+.subject-card-name {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.subject-card-count {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.subject-card.all-card .subject-card-name {
+  font-size: 15px;
+  color: var(--cyan);
+}
+
+/* animate cards in */
+.subject-card {
+  animation: fade-up 0.3s ease both;
+}
+
+/* ── CARD TOPBAR ─────────────────────────────────────────────── */
+.card-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px 6px;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--surface-2);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-sm);
+  padding: 6px 12px;
+  cursor: pointer;
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 600;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.back-btn:active {
+  background: var(--cyan-dim);
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.back-arrow { font-size: 14px; }
+
+.card-topbar-center {
+  flex: 1;
+  text-align: center;
+  overflow: hidden;
+}
+
+.active-subject-name {
   font-family: var(--font-display);
   font-size: 13px;
   font-weight: 700;
   color: var(--cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
 }
 
+.daily-count {
+  font-family: var(--font-display);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* slim progress bar (no label row above) */
+.daily-strip.slim {
+  padding: 0 16px 6px;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   HOME TAB — CARD AREA
+═══════════════════════════════════════════════════════════════ */
+
+/* Daily progress strip */
+/* daily-strip: kept for slim variant only — see .daily-strip.slim above */
 .daily-progress-bar {
   height: 4px;
   background: rgba(255,255,255,0.06);
@@ -352,27 +510,6 @@ body {
   box-shadow: 0 0 8px var(--cyan-glow);
 }
 
-/* Category pill */
-.category-bar {
-  padding: 10px 20px 0;
-  flex-shrink: 0;
-}
-
-.category-pill {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  background: var(--cyan-dim);
-  border: 1px solid rgba(0,229,255,0.2);
-  border-radius: 99px;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  color: var(--cyan);
-}
-
-/* ── CARD ARENA ─────────────────────────────────────────────── */
 .card-arena {
   flex: 1;
   display: flex;
