@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0a0a12" />
+  <title>AGRIMETS</title>
+
+  <!-- Telegram Web App SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════════════
+       SPLASH / LOADING SCREEN
+  ════════════════════════════════════════════════ -->
+  <div id="splash-screen" class="splash">
+    <div class="splash-logo">
+      <div class="splash-icon">⚡</div>
+      <h1 class="splash-title">AGRIMETS</h1>
+      <p class="splash-sub">Swipe Cards</p>
+    </div>
+    <div class="splash-loader">
+      <div class="loader-bar"><div class="loader-fill" id="loader-fill"></div></div>
+      <p class="loader-text" id="loader-text">Fetching today's cards…</p>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
+       MAIN APP SHELL
+  ════════════════════════════════════════════════ -->
+  <div id="app" class="app hidden">
+
+    <!-- TOP NAVIGATION -->
+    <header class="app-header">
+      <div class="header-left">
+        <span class="app-logo">⚡</span>
+        <span class="app-title">AGRIMETS</span>
+      </div>
+      <div class="header-right">
+        <button class="icon-btn" id="streak-btn" title="Streak">
+          <span class="streak-fire">🔥</span>
+          <span class="streak-count" id="header-streak">0</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- BOTTOM TAB BAR -->
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-tab="home" id="tab-home">
+        <span class="tab-icon">🃏</span>
+        <span class="tab-label">Cards</span>
+      </button>
+      <button class="tab-btn" data-tab="saved" id="tab-saved">
+        <span class="tab-icon">🔖</span>
+        <span class="tab-label">Saved</span>
+        <span class="tab-badge hidden" id="saved-badge">0</span>
+      </button>
+      <button class="tab-btn" data-tab="progress" id="tab-progress">
+        <span class="tab-icon">📊</span>
+        <span class="tab-label">Progress</span>
+      </button>
+    </nav>
+
+    <!-- ═══════════════════
+         TAB: HOME (CARDS)
+    ════════════════════ -->
+    <section class="tab-view active" id="view-home">
+
+      <!-- Daily progress strip -->
+      <div class="daily-strip">
+        <div class="daily-info">
+          <span class="daily-label">Today</span>
+          <span class="daily-count" id="daily-count">0 / 10</span>
+        </div>
+        <div class="daily-progress-bar">
+          <div class="daily-progress-fill" id="daily-progress-fill" style="width:0%"></div>
+        </div>
+      </div>
+
+      <!-- Category pill -->
+      <div class="category-bar">
+        <span class="category-pill" id="current-category">—</span>
+      </div>
+
+      <!-- CARD STACK -->
+      <div class="card-arena" id="card-arena">
+
+        <!-- Ghost cards (depth) -->
+        <div class="card ghost-card ghost-2" id="ghost-card-2"></div>
+        <div class="card ghost-card ghost-1" id="ghost-card-1"></div>
+
+        <!-- Active swipeable card -->
+        <div class="card active-card" id="active-card">
+          <div class="card-inner" id="card-inner">
+
+            <!-- FRONT: Question -->
+            <div class="card-face card-front" id="card-front">
+              <div class="card-number" id="card-number">Q1</div>
+              <div class="card-question" id="card-question">Loading question…</div>
+            </div>
+
+            <!-- BACK: Answer -->
+            <div class="card-face card-back" id="card-back">
+              <div class="back-label">Answer</div>
+              <div class="card-answer" id="card-answer"></div>
+              <div class="card-question-repeat" id="card-question-repeat"></div>
+            </div>
+
+          </div>
+
+          <!-- Swipe direction overlays -->
+          <div class="swipe-overlay swipe-right" id="overlay-right">
+            <span>⏭ Skip</span>
+          </div>
+          <div class="swipe-overlay swipe-left" id="overlay-left">
+            <span>⏭ Skip</span>
+          </div>
+          <div class="swipe-overlay swipe-up" id="overlay-up">
+            <span>⏭ Skip</span>
+          </div>
+          <div class="swipe-overlay swipe-down" id="overlay-down">
+            <span>👇 Reveal Answer</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ACTION BUTTONS -->
+      <div class="action-row">
+        <button class="action-btn skip-btn" id="btn-skip" title="Skip (←)">
+          <span class="action-icon">⏭</span>
+          <span class="action-label">Skip</span>
+        </button>
+        <button class="action-btn flip-btn" id="btn-flip" title="Flip card">
+          <span class="action-icon">🔄</span>
+          <span class="action-label">Reveal</span>
+        </button>
+        <button class="action-btn save-btn" id="btn-save" title="Save (↑)">
+          <span class="action-icon">🔖</span>
+          <span class="action-label">Save</span>
+        </button>
+        <button class="action-btn next-btn" id="btn-next" title="Next (→)">
+          <span class="action-icon">✓</span>
+          <span class="action-label">Done</span>
+        </button>
+      </div>
+
+      <!-- SWIPE GUIDE (first time) -->
+      <div class="swipe-guide" id="swipe-guide">
+        <div class="guide-row">
+          <span class="guide-arrow">↓</span>
+          <span class="guide-text">Reveal answer</span>
+        </div>
+        <div class="guide-row">
+          <span class="guide-arrow">↑ ← →</span>
+          <span class="guide-text">Skip</span>
+        </div>
+      </div>
+
+      <!-- COMPLETION SCREEN -->
+      <div class="completion-screen hidden" id="completion-screen">
+        <div class="completion-icon">🎉</div>
+        <h2 class="completion-title">Today's Done!</h2>
+        <p class="completion-sub">You've finished all 10 cards for today.</p>
+        <div class="completion-stats">
+          <div class="comp-stat">
+            <span class="comp-stat-val" id="comp-saved">0</span>
+            <span class="comp-stat-label">Saved</span>
+          </div>
+          <div class="comp-stat">
+            <span class="comp-stat-val" id="comp-skipped">0</span>
+            <span class="comp-stat-label">Skipped</span>
+          </div>
+          <div class="comp-stat">
+            <span class="comp-stat-val" id="comp-streak">0</span>
+            <span class="comp-stat-label">Day Streak</span>
+          </div>
+        </div>
+        <button class="cta-btn" id="btn-review-saved">
+          Review Saved Cards →
+        </button>
+        <p class="come-back-text">Come back tomorrow for 10 new cards! 📅</p>
+      </div>
+
+    </section>
+
+    <!-- ═══════════════════════
+         TAB: SAVED CARDS
+    ════════════════════════ -->
+    <section class="tab-view" id="view-saved">
+      <div class="page-header">
+        <h2 class="page-title">Saved Cards</h2>
+        <span class="page-subtitle" id="saved-count-label">0 cards</span>
+      </div>
+
+      <div class="saved-list" id="saved-list">
+        <!-- Populated by JS -->
+      </div>
+
+      <div class="empty-state hidden" id="saved-empty">
+        <div class="empty-icon">🔖</div>
+        <p class="empty-title">No saved cards yet</p>
+        <p class="empty-sub">Swipe up on a card to save it here</p>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════
+         TAB: PROGRESS
+    ════════════════════════ -->
+    <section class="tab-view" id="view-progress">
+      <div class="page-header">
+        <h2 class="page-title">Progress</h2>
+        <span class="page-subtitle" id="today-date-label">—</span>
+      </div>
+
+      <!-- Stats grid -->
+      <div class="stats-grid">
+        <div class="stat-card stat-streak">
+          <div class="stat-icon">🔥</div>
+          <div class="stat-val" id="stat-streak">0</div>
+          <div class="stat-label">Day Streak</div>
+        </div>
+        <div class="stat-card stat-total">
+          <div class="stat-icon">📚</div>
+          <div class="stat-val" id="stat-total">0</div>
+          <div class="stat-label">Total Seen</div>
+        </div>
+        <div class="stat-card stat-saved">
+          <div class="stat-icon">🔖</div>
+          <div class="stat-val" id="stat-saved">0</div>
+          <div class="stat-label">Saved</div>
+        </div>
+        <div class="stat-card stat-days">
+          <div class="stat-icon">📅</div>
+          <div class="stat-val" id="stat-days">0</div>
+          <div class="stat-label">Days Active</div>
+        </div>
+      </div>
+
+      <!-- Weekly heatmap -->
+      <div class="heatmap-section">
+        <h3 class="section-title">This Week</h3>
+        <div class="heatmap" id="heatmap">
+          <!-- 7 day dots rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Category breakdown -->
+      <div class="category-section">
+        <h3 class="section-title">By Category</h3>
+        <div class="category-bars" id="category-bars">
+          <!-- Rendered by JS -->
+        </div>
+      </div>
+
+      <!-- Reset button -->
+      <div class="reset-section">
+        <button class="reset-btn" id="btn-reset">↺ Reset Progress</button>
+        <p class="reset-warning">This will clear all local data</p>
+      </div>
+
+    </section>
+
+  </div><!-- end #app -->
+
+  <!-- ═══════════════════════════════════════════════
+       TOAST NOTIFICATION
+  ════════════════════════════════════════════════ -->
+  <div class="toast" id="toast"></div>
+
+  <!-- ═══════════════════════════════════════════════
+       AD BANNER PLACEHOLDER (monetization ready)
+  ════════════════════════════════════════════════ -->
+  <div class="ad-banner hidden" id="ad-banner">
+    <span class="ad-label">Advertisement</span>
+    <div class="ad-slot" id="ad-slot">
+      <!-- Insert ad code here -->
+    </div>
+    <button class="ad-close" id="ad-close">✕</button>
+  </div>
+
+  <!-- Scripts -->
+  <script src="telegram.js"></script>
+  <script src="swipe.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
