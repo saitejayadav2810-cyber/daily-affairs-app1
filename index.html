@@ -74,121 +74,97 @@
     ════════════════════ -->
     <section class="tab-view active" id="view-home">
 
-      <!-- Daily progress strip -->
-      <div class="daily-strip">
-        <div class="daily-info">
-          <span class="daily-label">Today</span>
-          <span class="daily-count" id="daily-count">0 / 10</span>
+      <!-- ── SUBJECT PICKER (shown first) ── -->
+      <div id="subject-picker">
+        <div class="subject-header">
+          <h2 class="subject-title">Choose a Subject</h2>
+          <p class="subject-sub">Select any subject to start swiping cards</p>
         </div>
-        <div class="daily-progress-bar">
-          <div class="daily-progress-fill" id="daily-progress-fill" style="width:0%"></div>
+        <div class="subject-grid" id="subject-grid">
+          <!-- Populated by JS from sheet categories -->
         </div>
       </div>
 
-      <!-- Category pill -->
-      <div class="category-bar">
-        <span class="category-pill" id="current-category">—</span>
-      </div>
+      <!-- ── CARD AREA (shown after subject selected) ── -->
+      <div id="card-area" class="hidden">
 
-      <!-- CARD STACK -->
-      <div class="card-arena" id="card-arena">
+        <!-- Top bar: back button + subject name + card count -->
+        <div class="card-topbar">
+          <button class="back-btn" id="btn-back-subjects">
+            <span class="back-arrow">←</span>
+            <span class="back-label">Subjects</span>
+          </button>
+          <div class="card-topbar-center">
+            <span class="active-subject-name" id="active-subject-name">—</span>
+          </div>
+          <span class="daily-count" id="daily-count">Card 1</span>
+        </div>
 
-        <!-- Ghost cards (depth) -->
-        <div class="card ghost-card ghost-2" id="ghost-card-2"></div>
-        <div class="card ghost-card ghost-1" id="ghost-card-1"></div>
+        <!-- Progress bar -->
+        <div class="daily-strip slim">
+          <div class="daily-progress-bar">
+            <div class="daily-progress-fill" id="daily-progress-fill" style="width:0%"></div>
+          </div>
+        </div>
 
-        <!-- Active swipeable card -->
-        <div class="card active-card" id="active-card">
-          <div class="card-inner" id="card-inner">
+        <!-- CARD STACK -->
+        <div class="card-arena" id="card-arena">
+          <div class="card ghost-card ghost-2" id="ghost-card-2"></div>
+          <div class="card ghost-card ghost-1" id="ghost-card-1"></div>
 
-            <!-- FRONT: Question -->
-            <div class="card-face card-front" id="card-front">
-              <div class="card-number" id="card-number">Q1</div>
-              <div class="card-question" id="card-question">Loading question…</div>
+          <div class="card active-card" id="active-card">
+            <div class="card-inner" id="card-inner">
+
+              <!-- FRONT -->
+              <div class="card-face card-front" id="card-front">
+                <div class="card-number" id="card-number">Q1</div>
+                <div class="card-question" id="card-question">Loading…</div>
+              </div>
+
+              <!-- BACK -->
+              <div class="card-face card-back" id="card-back">
+                <div class="back-label">Answer</div>
+                <div class="card-answer" id="card-answer"></div>
+                <div class="card-question-repeat" id="card-question-repeat"></div>
+              </div>
+
             </div>
 
-            <!-- BACK: Answer -->
-            <div class="card-face card-back" id="card-back">
-              <div class="back-label">Answer</div>
-              <div class="card-answer" id="card-answer"></div>
-              <div class="card-question-repeat" id="card-question-repeat"></div>
-            </div>
-
-          </div>
-
-          <!-- Swipe direction overlays -->
-          <div class="swipe-overlay swipe-right" id="overlay-right">
-            <span>⏭ Skip</span>
-          </div>
-          <div class="swipe-overlay swipe-left" id="overlay-left">
-            <span>⏭ Skip</span>
-          </div>
-          <div class="swipe-overlay swipe-up" id="overlay-up">
-            <span>⏭ Skip</span>
-          </div>
-          <div class="swipe-overlay swipe-down" id="overlay-down">
-            <span>👇 Reveal Answer</span>
+            <!-- Overlays -->
+            <div class="swipe-overlay swipe-right" id="overlay-right"><span>⏭ Skip</span></div>
+            <div class="swipe-overlay swipe-left"  id="overlay-left"><span>⏭ Skip</span></div>
+            <div class="swipe-overlay swipe-up"    id="overlay-up"><span>⏭ Skip</span></div>
+            <div class="swipe-overlay swipe-down"  id="overlay-down"><span>👇 Reveal Answer</span></div>
           </div>
         </div>
 
-      </div>
-
-      <!-- ACTION BUTTONS -->
-      <div class="action-row">
-        <button class="action-btn skip-btn" id="btn-skip" title="Skip (←)">
-          <span class="action-icon">⏭</span>
-          <span class="action-label">Skip</span>
-        </button>
-        <button class="action-btn flip-btn" id="btn-flip" title="Flip card">
-          <span class="action-icon">🔄</span>
-          <span class="action-label">Reveal</span>
-        </button>
-        <button class="action-btn save-btn" id="btn-save" title="Save (↑)">
-          <span class="action-icon">🔖</span>
-          <span class="action-label">Save</span>
-        </button>
-        <button class="action-btn next-btn" id="btn-next" title="Next (→)">
-          <span class="action-icon">✓</span>
-          <span class="action-label">Done</span>
-        </button>
-      </div>
-
-      <!-- SWIPE GUIDE (first time) -->
-      <div class="swipe-guide" id="swipe-guide">
-        <div class="guide-row">
-          <span class="guide-arrow">↓</span>
-          <span class="guide-text">Reveal answer</span>
+        <!-- ACTION BUTTONS -->
+        <div class="action-row">
+          <button class="action-btn skip-btn" id="btn-skip">
+            <span class="action-icon">⏭</span>
+            <span class="action-label">Skip</span>
+          </button>
+          <button class="action-btn flip-btn" id="btn-flip">
+            <span class="action-icon">🔄</span>
+            <span class="action-label">Reveal</span>
+          </button>
+          <button class="action-btn save-btn" id="btn-save">
+            <span class="action-icon">🔖</span>
+            <span class="action-label">Save</span>
+          </button>
+          <button class="action-btn next-btn" id="btn-next">
+            <span class="action-icon">✓</span>
+            <span class="action-label">Done</span>
+          </button>
         </div>
-        <div class="guide-row">
-          <span class="guide-arrow">↑ ← →</span>
-          <span class="guide-text">Skip</span>
-        </div>
-      </div>
 
-      <!-- COMPLETION SCREEN -->
-      <div class="completion-screen hidden" id="completion-screen">
-        <div class="completion-icon">🎉</div>
-        <h2 class="completion-title">Today's Done!</h2>
-        <p class="completion-sub">You've finished all 10 cards for today.</p>
-        <div class="completion-stats">
-          <div class="comp-stat">
-            <span class="comp-stat-val" id="comp-saved">0</span>
-            <span class="comp-stat-label">Saved</span>
-          </div>
-          <div class="comp-stat">
-            <span class="comp-stat-val" id="comp-skipped">0</span>
-            <span class="comp-stat-label">Skipped</span>
-          </div>
-          <div class="comp-stat">
-            <span class="comp-stat-val" id="comp-streak">0</span>
-            <span class="comp-stat-label">Day Streak</span>
-          </div>
+        <!-- SWIPE GUIDE -->
+        <div class="swipe-guide" id="swipe-guide">
+          <div class="guide-row"><span class="guide-arrow">↓</span><span class="guide-text">Reveal answer</span></div>
+          <div class="guide-row"><span class="guide-arrow">↑ ← →</span><span class="guide-text">Skip</span></div>
         </div>
-        <button class="cta-btn" id="btn-review-saved">
-          Review Saved Cards →
-        </button>
-        <p class="come-back-text">Come back tomorrow for 10 new cards! 📅</p>
-      </div>
+
+      </div><!-- end #card-area -->
 
     </section>
 
