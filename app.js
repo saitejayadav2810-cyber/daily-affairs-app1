@@ -596,6 +596,13 @@ function _renderCard(question) {
         card.style.transition = 'opacity 0.2s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)';
         card.style.opacity    = '1';
         card.style.transform  = 'translateY(0) scale(1)';
+
+        // Sync ghost card heights to match active card
+        const h = card.offsetHeight;
+        const g1 = document.getElementById('ghost-card-1');
+        const g2 = document.getElementById('ghost-card-2');
+        if (g1) g1.style.height = h + 'px';
+        if (g2) g2.style.height = h + 'px';
       });
     });
 
