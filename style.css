@@ -266,6 +266,34 @@ body {
   color: var(--cyan);
 }
 
+/* ── UPDATE TAB BUTTON ─────────────────────────────────────── */
+.update-tab-btn {
+  color: var(--text-muted);
+}
+
+.update-tab-btn:active {
+  color: #FFAB00;
+}
+
+.update-tab-btn.updating {
+  color: #FFAB00;
+  pointer-events: none;
+}
+
+.update-icon {
+  display: inline-block;
+  transition: transform 0.3s;
+}
+
+.update-tab-btn.updating .update-icon {
+  animation: spin-update 0.8s linear infinite;
+}
+
+@keyframes spin-update {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
 .tab-icon { font-size: 20px; }
 .tab-label {
   font-size: 10px;
@@ -722,9 +750,9 @@ body {
 }
 
 .swipe-up {
-  background: linear-gradient(135deg, rgba(255,171,0,0.3), rgba(255,171,0,0.1));
-  border: 2px solid rgba(255,171,0,0.6);
-  color: #FFAB00;
+  background: linear-gradient(135deg, rgba(255,82,82,0.3), rgba(255,82,82,0.1));
+  border: 2px solid rgba(255,82,82,0.5);
+  color: var(--red);
 }
 
 .swipe-down {
