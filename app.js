@@ -26,7 +26,7 @@ const CONFIG = {
   API_BASE: 'https://opensheet.elk.sh',
 
   CARDS_PER_DAY:    99999,  // Unlimited — all questions shown continuously
-  CACHE_TTL_HOURS:  12,    // Re-fetch sheet after this many hours
+  CACHE_TTL_HOURS:  0,     // Always fetch fresh from Google Sheet on every load
   SKIP_DELAY_DAYS:  3,     // Skipped cards return after N days
 };
 
@@ -600,7 +600,7 @@ function _renderCard(question) {
         down:  DOM.overlayDown,
       }, {
         onSwipeDown:  () => _flipCard(),
-        onSwipeUp:    () => _handleSave(question),
+        onSwipeUp:    () => _handleSkip(question),
         onSwipeRight: () => _handleSkip(question),
         onSwipeLeft:  () => _handleSkip(question),
         onTap:        () => _flipCard(),
