@@ -1521,7 +1521,7 @@ body {
 }
 
 .card-snap-back {
-  transition: transform 0.17s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: transform 0.30s cubic-bezier(0.34, 1.4, 0.64, 1) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════
