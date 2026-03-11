@@ -272,6 +272,31 @@
   </div><!-- end #app -->
 
   <!-- ═══════════════════════════════════════════════
+       CHANNEL JOIN POPUP
+  ════════════════════════════════════════════════ -->
+  <div class="channel-popup-overlay hidden" id="channel-popup-overlay">
+    <div class="channel-popup" id="channel-popup">
+      <button class="channel-popup-close" id="channel-popup-close" aria-label="Close">✕</button>
+
+      <div class="channel-popup-icon">📢</div>
+      <h2 class="channel-popup-title">Join Our Channel!</h2>
+      <p class="channel-popup-msg">
+        Get daily updates, new question sets, and announcements on our official Telegram channel.
+      </p>
+
+      <a class="channel-join-btn" id="channel-join-btn"
+         href="https://t.me/YOUR_CHANNEL_USERNAME" target="_blank">
+        <span>Join Channel</span>
+        <span class="channel-btn-arrow">→</span>
+      </a>
+
+      <button class="channel-skip-btn" id="channel-skip-btn">
+        Maybe later
+      </button>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════════════
        TOAST NOTIFICATION
   ════════════════════════════════════════════════ -->
   <div class="toast" id="toast"></div>
