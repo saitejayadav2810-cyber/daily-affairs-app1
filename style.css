@@ -647,17 +647,13 @@ body {
   color: #FFFFFF;
   letter-spacing: 0.15px;
   flex: 1;
-  display: block;
-  text-align: justify;
-  text-justify: inter-word;
+  display: flex;
+  align-items: center;        /* vertically centers text in remaining space */
   text-shadow: 0 1px 2px rgba(0,0,0,0.4);
   word-break: normal;
   overflow-wrap: break-word;
   hyphens: none;
   -webkit-hyphens: none;
-  /* vertical center via margin auto when content is short */
-  margin-top: auto;
-  margin-bottom: auto;
 }
 
 .card-hint {
@@ -708,16 +704,13 @@ body {
   line-height: 1.55;
   letter-spacing: 0.2px;
   flex: 1;
-  display: block;
-  text-align: justify;
-  text-justify: inter-word;
+  display: flex;
+  align-items: center;        /* vertically centers answer text */
   text-shadow: 0 0 12px rgba(0,255,136,0.35);
   word-break: normal;
   overflow-wrap: break-word;
   hyphens: none;
   -webkit-hyphens: none;
-  margin-top: auto;
-  margin-bottom: auto;
 }
 
 .card-question-repeat {
