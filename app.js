@@ -224,7 +224,7 @@ async function fetchQuestions() {
   // ── Serve fresh cache if available ──────────────────────────
   if (cached && Array.isArray(cached) && cached.length > 0 && ageHours < CONFIG.CACHE_TTL_HOURS) {
     setLoaderProgress(100, `✓ Loaded ${cached.length} questions`);
-    await _delay(50);
+    await _delay(150);
     return cached;
   }
 
@@ -358,7 +358,7 @@ async function fetchQuestions() {
   ls_set(LS.QUESTIONS, questions);
   ls_set(LS.CACHE_TIME, Date.now());
 
-  await _delay(30);
+  await _delay(100);
   setLoaderProgress(100, `✓ ${questions.length} questions loaded!`);
   return questions;
 }
@@ -603,13 +603,13 @@ function _renderCard(question, skipStack) {
     DOM.swipeGuide?.classList.add('hidden');
   }
 
-  // Animate card entrance — fast slide-up
+  // Animate card entrance
   if (card) {
     card.style.opacity    = '0';
-    card.style.transform  = 'translateY(18px) scale(0.97)';
+    card.style.transform  = 'translateY(22px) scale(0.97)';
     card.style.transition = 'none';
     requestAnimationFrame(() => {
-      card.style.transition = 'opacity 0.08s ease, transform 0.13s cubic-bezier(0.22, 1, 0.36, 1)';
+      card.style.transition = 'opacity 0.10s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)';
       card.style.opacity    = '1';
       card.style.transform  = 'translateY(0) scale(1)';
 
@@ -621,7 +621,7 @@ function _renderCard(question, skipStack) {
       if (g2) g2.style.height = h + 'px';
     });
 
-    // Re-init swipe engine immediately (no perceptible delay needed)
+    // Re-init swipe engine — half of original 220ms
     SwipeEngine.destroy();
     setTimeout(() => {
       SwipeEngine.init(card, {
@@ -636,7 +636,7 @@ function _renderCard(question, skipStack) {
         onSwipeLeft:  () => _handleSkip(question),
         onTap:        () => _flipCard(),
       });
-    }, 30);
+    }, 110);
   }
 
   _updateDailyProgress();
@@ -709,21 +709,21 @@ function _handleNext(question) {
   _recordHistory(question, 'done');
   markSeen(question.id);
   TG.Haptic.success();
-  setTimeout(loadNextCard, 75);
+  setTimeout(loadNextCard, 110);
 }
 
 function _handleSkip(question) {
   _recordHistory(question, 'skipped');
   skipCard(question.id);
   markSeen(question.id);
-  setTimeout(loadNextCard, 75);
+  setTimeout(loadNextCard, 110);
 }
 
 function _handleSave(question) {
   _recordHistory(question, 'saved');
   saveCard(question);
   markSeen(question.id);
-  setTimeout(loadNextCard, 75);
+  setTimeout(loadNextCard, 110);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1552,7 +1552,7 @@ async function boot() {
   _initButtons();
 
   // 7. Dismiss splash
-  await _delay(80);
+  await _delay(300);
   DOM.splash?.classList.add('fade-out');
   setTimeout(() => {
     DOM.splash?.classList.add('hidden');
