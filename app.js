@@ -44,6 +44,7 @@ const LS = {
   DAILY_INDEX:   'dca_daily_index',     // How many cards shown today
   STATS:         'dca_stats',           // { streak, lastActive, totalSeen, daysActive }
   GUIDE_SHOWN:   'dca_guide_shown',     // Whether swipe guide has been dismissed
+  HISTORY:       'dca_history',         // [{id, question, answer, category, action, ts}]
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -120,14 +121,19 @@ function _cacheDom() {
     tabHome:           document.getElementById('tab-home'),
     tabSaved:          document.getElementById('tab-saved'),
     tabProgress:       document.getElementById('tab-progress'),
+    tabHistory:        document.getElementById('tab-history'),
     tabUpdate:         document.getElementById('tab-update'),
     viewHome:          document.getElementById('view-home'),
     viewSaved:         document.getElementById('view-saved'),
     viewProgress:      document.getElementById('view-progress'),
+    viewHistory:       document.getElementById('view-history'),
     savedBadge:        document.getElementById('saved-badge'),
     savedCountLabel:   document.getElementById('saved-count-label'),
     savedList:         document.getElementById('saved-list'),
     savedEmpty:        document.getElementById('saved-empty'),
+    historyList:       document.getElementById('history-list'),
+    historyEmpty:      document.getElementById('history-empty'),
+    historyCountLabel: document.getElementById('history-count-label'),
 
     // Progress
     todayDateLabel:    document.getElementById('today-date-label'),
@@ -630,20 +636,41 @@ function _flipCard() {
 //  SWIPE HANDLERS
 // ════════════════════════════════════════════════════════════════
 
+// ── Record card action to history ────────────────────────────
+function _recordHistory(question, action) {
+  // action: 'done' | 'skipped' | 'saved'
+  try {
+    const history = ls_get(LS.HISTORY, []);
+    const filtered = history.filter(h => h.id !== question.id); // replace if seen before
+    filtered.unshift({
+      id:       question.id,
+      question: question.question,
+      answer:   question.answer,
+      category: question.category || '',
+      action,
+      ts: Date.now(),
+    });
+    ls_set(LS.HISTORY, filtered.slice(0, 500)); // keep max 500
+  } catch(e) {}
+}
+
 function _handleNext(question) {
   // "Got it" — mark seen, load next
+  _recordHistory(question, 'done');
   markSeen(question.id);
   TG.Haptic.success();
   setTimeout(loadNextCard, 420);
 }
 
 function _handleSkip(question) {
+  _recordHistory(question, 'skipped');
   skipCard(question.id);
   markSeen(question.id);
   setTimeout(loadNextCard, 420);
 }
 
 function _handleSave(question) {
+  _recordHistory(question, 'saved');
   saveCard(question);
   markSeen(question.id);
   setTimeout(loadNextCard, 420);
@@ -820,10 +847,84 @@ function showSubjectPicker() {
   TG.Haptic.select();
 }
 
+// ════════════════════════════════════════════════════════════════
+//  HISTORY TAB RENDERING
+// ════════════════════════════════════════════════════════════════
+
+let _historyFilter = 'all';
+
+function renderHistoryTab() {
+  const history = ls_get(LS.HISTORY, []);
+  const filtered = _historyFilter === 'all'
+    ? history
+    : history.filter(h => h.action === _historyFilter);
+
+  if (DOM.historyCountLabel)
+    DOM.historyCountLabel.textContent = `${filtered.length} card${filtered.length !== 1 ? 's' : ''}`;
+
+  document.querySelectorAll('.hist-filter-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === _historyFilter);
+  });
+
+  if (!DOM.historyList) return;
+  DOM.historyList.innerHTML = '';
+
+  if (filtered.length === 0) {
+    DOM.historyEmpty?.classList.remove('hidden');
+    DOM.historyList.classList.add('hidden');
+    return;
+  }
+
+  DOM.historyEmpty?.classList.add('hidden');
+  DOM.historyList.classList.remove('hidden');
+
+  filtered.forEach((h, i) => {
+    const actionMeta = {
+      done:    { label: '✓ Done',    cls: 'badge-done' },
+      skipped: { label: '⏭ Skipped', cls: 'badge-skipped' },
+      saved:   { label: '🔖 Saved',  cls: 'badge-saved' },
+    }[h.action] || { label: h.action, cls: '' };
+
+    const item = document.createElement('div');
+    item.className = 'hist-item';
+    item.style.setProperty('--i', i);
+    item.innerHTML = `
+      <div class="hist-item-top">
+        <span class="hist-item-category">${_escHtml(h.category)}</span>
+        <span class="hist-action-badge ${actionMeta.cls}">${actionMeta.label}</span>
+      </div>
+      <div class="hist-item-question">${_escHtml(h.question)}</div>
+      <div class="hist-item-answer hidden" id="hist-ans-${i}">${_escHtml(h.answer)}</div>
+      <button class="hist-toggle-btn" data-idx="${i}">Show Answer ▾</button>
+    `;
+
+    const toggleBtn = item.querySelector('.hist-toggle-btn');
+    const ansEl     = item.querySelector(`#hist-ans-${i}`);
+    toggleBtn.addEventListener('click', () => {
+      const isHidden = ansEl.classList.toggle('hidden');
+      toggleBtn.textContent = isHidden ? 'Show Answer ▾' : 'Hide Answer ▴';
+      TG.Haptic.light();
+    });
+
+    DOM.historyList.appendChild(item);
+  });
+}
+
+function _initHistoryFilters() {
+  document.querySelectorAll('.hist-filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      _historyFilter = btn.dataset.filter;
+      TG.Haptic.select();
+      renderHistoryTab();
+    });
+  });
+}
+
 function _initTabs() {
   const tabs = [
     { btn: DOM.tabHome,     view: DOM.viewHome,     id: 'home' },
     { btn: DOM.tabSaved,    view: DOM.viewSaved,    id: 'saved' },
+    { btn: DOM.tabHistory,  view: DOM.viewHistory,  id: 'history' },
     { btn: DOM.tabProgress, view: DOM.viewProgress, id: 'progress' },
   ];
 
@@ -840,9 +941,12 @@ function _initTabs() {
 
       if (id === 'home')     showSubjectPicker();
       if (id === 'saved')    renderSavedTab();
+      if (id === 'history')  renderHistoryTab();
       if (id === 'progress') renderProgressTab();
     });
   });
+
+  _initHistoryFilters();
 }
 
 // ════════════════════════════════════════════════════════════════
