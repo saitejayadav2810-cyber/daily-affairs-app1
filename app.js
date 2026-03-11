@@ -224,7 +224,7 @@ async function fetchQuestions() {
   // ── Serve fresh cache if available ──────────────────────────
   if (cached && Array.isArray(cached) && cached.length > 0 && ageHours < CONFIG.CACHE_TTL_HOURS) {
     setLoaderProgress(100, `✓ Loaded ${cached.length} questions`);
-    await _delay(300);
+    await _delay(50);
     return cached;
   }
 
@@ -358,7 +358,7 @@ async function fetchQuestions() {
   ls_set(LS.QUESTIONS, questions);
   ls_set(LS.CACHE_TIME, Date.now());
 
-  await _delay(200);
+  await _delay(30);
   setLoaderProgress(100, `✓ ${questions.length} questions loaded!`);
   return questions;
 }
@@ -603,27 +603,25 @@ function _renderCard(question, skipStack) {
     DOM.swipeGuide?.classList.add('hidden');
   }
 
-  // Animate card entrance
+  // Animate card entrance — fast slide-up
   if (card) {
     card.style.opacity    = '0';
-    card.style.transform  = 'translateY(30px) scale(0.95)';
+    card.style.transform  = 'translateY(18px) scale(0.97)';
     card.style.transition = 'none';
     requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        card.style.transition = 'opacity 0.2s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)';
-        card.style.opacity    = '1';
-        card.style.transform  = 'translateY(0) scale(1)';
+      card.style.transition = 'opacity 0.08s ease, transform 0.13s cubic-bezier(0.22, 1, 0.36, 1)';
+      card.style.opacity    = '1';
+      card.style.transform  = 'translateY(0) scale(1)';
 
-        // Sync ghost card heights to match active card
-        const h = card.offsetHeight;
-        const g1 = document.getElementById('ghost-card-1');
-        const g2 = document.getElementById('ghost-card-2');
-        if (g1) g1.style.height = h + 'px';
-        if (g2) g2.style.height = h + 'px';
-      });
+      // Sync ghost card heights
+      const h  = card.offsetHeight;
+      const g1 = document.getElementById('ghost-card-1');
+      const g2 = document.getElementById('ghost-card-2');
+      if (g1) g1.style.height = h + 'px';
+      if (g2) g2.style.height = h + 'px';
     });
 
-    // Re-init swipe engine
+    // Re-init swipe engine immediately (no perceptible delay needed)
     SwipeEngine.destroy();
     setTimeout(() => {
       SwipeEngine.init(card, {
@@ -638,7 +636,7 @@ function _renderCard(question, skipStack) {
         onSwipeLeft:  () => _handleSkip(question),
         onTap:        () => _flipCard(),
       });
-    }, 220);
+    }, 30);
   }
 
   _updateDailyProgress();
@@ -711,21 +709,21 @@ function _handleNext(question) {
   _recordHistory(question, 'done');
   markSeen(question.id);
   TG.Haptic.success();
-  setTimeout(loadNextCard, 220);
+  setTimeout(loadNextCard, 75);
 }
 
 function _handleSkip(question) {
   _recordHistory(question, 'skipped');
   skipCard(question.id);
   markSeen(question.id);
-  setTimeout(loadNextCard, 220);
+  setTimeout(loadNextCard, 75);
 }
 
 function _handleSave(question) {
   _recordHistory(question, 'saved');
   saveCard(question);
   markSeen(question.id);
-  setTimeout(loadNextCard, 220);
+  setTimeout(loadNextCard, 75);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1223,7 +1221,7 @@ async function manualRefresh() {
     showToast('❌ Update failed — check connection', 3000);
     TG.Haptic.error();
   } finally {
-    setTimeout(() => btn.classList.remove('updating'), 800);
+    setTimeout(() => btn.classList.remove('updating'), 300);
   }
 }
 
@@ -1362,7 +1360,7 @@ function _showChannelPopup() {
     overlay.style.animation = 'none';
     overlay.style.opacity   = '0';
     overlay.style.transition = 'opacity 0.2s ease';
-    setTimeout(() => overlay.classList.add('hidden'), 200);
+    setTimeout(() => overlay.classList.add('hidden'), 80);
     TG.Haptic.select();
   }
 
@@ -1375,7 +1373,7 @@ function _showChannelPopup() {
   // Join button — opens channel then closes popup
   joinBtn?.addEventListener('click', () => {
     TG.Haptic.medium();
-    setTimeout(_closePopup, 400);
+    setTimeout(_closePopup, 120);
   }, { once: true });
 }
 
@@ -1467,7 +1465,7 @@ function _checkShareMilestone(totalSeen) {
   if (totalSeen <= lastMilestone) return;
 
   ls_set('dca_last_share_milestone', totalSeen);
-  setTimeout(() => _showSharePopup(totalSeen), 600);
+  setTimeout(() => _showSharePopup(totalSeen), 150);
 }
 
 function _showSharePopup(milestone) {
@@ -1504,7 +1502,7 @@ function _showSharePopup(milestone) {
   shareBtn?.addEventListener('click', () => {
     TG.Haptic.medium();
     _shareApp();
-    setTimeout(_closeShare, 500);
+    setTimeout(_closeShare, 120);
   }, { once: true });
 }
 
@@ -1554,12 +1552,12 @@ async function boot() {
   _initButtons();
 
   // 7. Dismiss splash
-  await _delay(600);
+  await _delay(80);
   DOM.splash?.classList.add('fade-out');
   setTimeout(() => {
     DOM.splash?.classList.add('hidden');
     DOM.app?.classList.remove('hidden');
-  }, 500);
+  }, 200);
 
   // 8. Show subject picker (card area hidden by default)
   DOM.cardArea?.classList.add('hidden');
@@ -1572,7 +1570,7 @@ async function boot() {
   // 10. Show channel join popup after short delay
   setTimeout(() => {
     try { _showChannelPopup(); } catch(e) { console.warn('[ChannelPopup]', e); }
-  }, 800);
+  }, 350);
 }
 
 // ── Wait for DOM ──────────────────────────────────────────────
