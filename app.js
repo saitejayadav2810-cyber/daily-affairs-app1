@@ -593,7 +593,7 @@ function _renderCard(question) {
     card.style.transition = 'none';
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        card.style.transition = 'opacity 0.35s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        card.style.transition = 'opacity 0.2s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)';
         card.style.opacity    = '1';
         card.style.transform  = 'translateY(0) scale(1)';
       });
@@ -614,7 +614,7 @@ function _renderCard(question) {
         onSwipeLeft:  () => _handleSkip(question),
         onTap:        () => _flipCard(),
       });
-    }, 400);
+    }, 220);
   }
 
   _updateDailyProgress();
@@ -659,21 +659,21 @@ function _handleNext(question) {
   _recordHistory(question, 'done');
   markSeen(question.id);
   TG.Haptic.success();
-  setTimeout(loadNextCard, 420);
+  setTimeout(loadNextCard, 220);
 }
 
 function _handleSkip(question) {
   _recordHistory(question, 'skipped');
   skipCard(question.id);
   markSeen(question.id);
-  setTimeout(loadNextCard, 420);
+  setTimeout(loadNextCard, 220);
 }
 
 function _handleSave(question) {
   _recordHistory(question, 'saved');
   saveCard(question);
   markSeen(question.id);
-  setTimeout(loadNextCard, 420);
+  setTimeout(loadNextCard, 220);
 }
 
 // ════════════════════════════════════════════════════════════════
