@@ -26,7 +26,7 @@ const CONFIG = {
   API_BASE: 'https://opensheet.elk.sh',
 
   CARDS_PER_DAY:    99999,  // Unlimited — all questions shown continuously
-  CACHE_TTL_HOURS:  12,    // Re-fetch sheet after this many hours
+  CACHE_TTL_HOURS:  0,     // Always fetch fresh from Google Sheet on every load
   SKIP_DELAY_DAYS:  3,     // Skipped cards return after N days
 };
 
@@ -121,7 +121,6 @@ function _cacheDom() {
     tabSaved:          document.getElementById('tab-saved'),
     tabProgress:       document.getElementById('tab-progress'),
     tabUpdate:         document.getElementById('tab-update'),
-    updateIcon:        document.getElementById('update-icon'),
     viewHome:          document.getElementById('view-home'),
     viewSaved:         document.getElementById('view-saved'),
     viewProgress:      document.getElementById('view-progress'),
@@ -602,7 +601,7 @@ function _renderCard(question) {
         down:  DOM.overlayDown,
       }, {
         onSwipeDown:  () => _flipCard(),
-        onSwipeUp:    () => _handleSkip(question),
+        onSwipeUp:    () => _handleSave(question),       // ↑ save
         onSwipeRight: () => _handleSkip(question),
         onSwipeLeft:  () => _handleSkip(question),
         onTap:        () => _flipCard(),
@@ -1031,29 +1030,24 @@ async function manualRefresh() {
   const btn = DOM.tabUpdate;
   if (!btn || btn.classList.contains('updating')) return;
 
-  // Start spin animation
   btn.classList.add('updating');
   TG.Haptic.medium();
   showToast('🔄 Fetching latest questions…', 2000);
 
-  // Clear the cache so fetchQuestions always hits the sheet
   ls_remove(LS.QUESTIONS);
   ls_remove(LS.CACHE_TIME);
 
   try {
     const fresh = await fetchQuestions();
     State.allQuestions = fresh;
-
-    // Refresh subject picker counts
     renderSubjectPicker();
 
-    // If currently in a subject session, reshuffle with new data
     if (State.activeSubject) {
       const pool = State.activeSubject === '__ALL__'
         ? shuffle([...fresh])
         : shuffle(fresh.filter(q => q.category === State.activeSubject));
       if (pool.length > 0) {
-        State.dailyCards  = pool;
+        State.dailyCards   = pool;
         State.currentIndex = 0;
         _updateDailyProgress();
         _renderCard(State.dailyCards[0]);
@@ -1063,20 +1057,16 @@ async function manualRefresh() {
     showToast(`✅ Updated! ${fresh.length} questions loaded.`, 2500);
     TG.Haptic.success();
   } catch (err) {
-    showToast('❌ Update failed — check your connection', 3000);
+    showToast('❌ Update failed — check connection', 3000);
     TG.Haptic.error();
   } finally {
-    // Stop spin after short delay so user sees it completed
     setTimeout(() => btn.classList.remove('updating'), 800);
   }
 }
 
 function _initButtons() {
   // ── Update / Refresh data ───────────────────────────────────
-  DOM.tabUpdate?.addEventListener('click', () => {
-    manualRefresh();
-  });
-
+  DOM.tabUpdate?.addEventListener('click', () => manualRefresh());
   // ── Back to subject picker ──────────────────────────────────
   DOM.btnBackSubjects?.addEventListener('click', () => {
     showSubjectPicker();
