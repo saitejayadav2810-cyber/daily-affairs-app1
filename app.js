@@ -1169,6 +1169,49 @@ function _escHtml(str) {
 //  BOOT  — Entry point
 // ════════════════════════════════════════════════════════════════
 
+// ════════════════════════════════════════════════════════════════
+//  CHANNEL JOIN POPUP
+//  ► Change CHANNEL_URL to your actual Telegram channel/group link
+// ════════════════════════════════════════════════════════════════
+
+const CHANNEL_URL = 'https://t.me/AGRIMETS_OFFICIAL'; // ← CHANGE THIS
+
+function _showChannelPopup() {
+  const overlay = document.getElementById('channel-popup-overlay');
+  const joinBtn = document.getElementById('channel-join-btn');
+  const closeBtn = document.getElementById('channel-popup-close');
+  const skipBtn  = document.getElementById('channel-skip-btn');
+
+  if (!overlay) return;
+
+  // Set the correct link
+  if (joinBtn) joinBtn.href = CHANNEL_URL;
+
+  // Show popup
+  overlay.classList.remove('hidden');
+  TG.Haptic.light();
+
+  function _closePopup() {
+    overlay.style.animation = 'none';
+    overlay.style.opacity   = '0';
+    overlay.style.transition = 'opacity 0.2s ease';
+    setTimeout(() => overlay.classList.add('hidden'), 200);
+    TG.Haptic.select();
+  }
+
+  // Close button (✕)
+  closeBtn?.addEventListener('click', _closePopup, { once: true });
+
+  // "Maybe later"
+  skipBtn?.addEventListener('click', _closePopup, { once: true });
+
+  // Join button — opens channel then closes popup
+  joinBtn?.addEventListener('click', () => {
+    TG.Haptic.medium();
+    setTimeout(_closePopup, 400);
+  }, { once: true });
+}
+
 async function boot() {
   // 1. Cache DOM
   _cacheDom();
@@ -1211,10 +1254,8 @@ async function boot() {
   DOM.subjectPicker?.classList.remove('hidden');
   renderSubjectPicker();
 
-  // 9. Show swipe guide when first card is opened
-  if (!ls_get(LS.GUIDE_SHOWN)) {
-    // guide shown inside selectSubject → _renderCard flow
-  }
+  // 9. Show channel join popup after short delay (app fully visible)
+  setTimeout(() => _showChannelPopup(), 800);
 }
 
 // ── Wait for DOM ──────────────────────────────────────────────
