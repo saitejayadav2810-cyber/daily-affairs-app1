@@ -1179,7 +1179,7 @@ function _escHtml(str) {
 //  ► Change CHANNEL_URL to your actual Telegram channel/group link
 // ════════════════════════════════════════════════════════════════
 
-const CHANNEL_URL = 'https://t.me/YOUR_CHANNEL_USERNAME'; // ← CHANGE THIS
+const CHANNEL_URL = 'https://t.me/AGRIMETS_OFFICIAL';
 
 function _showChannelPopup() {
   const overlay = document.getElementById('channel-popup-overlay');
