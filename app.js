@@ -1403,7 +1403,7 @@ function _animateCount(el, target) {
 // ════════════════════════════════════════════════════════════════
 
 // ► Change to your actual app/bot link
-const APP_SHARE_URL  = 'https://t.me/YOUR_BOT_USERNAME/YOUR_APP_NAME';
+const APP_SHARE_URL  = 'https://t.me/Agrimets_bot';
 const APP_SHARE_TEXT = '🌾 I\'m using AGRIMETS Swipe Cards to prepare for agriculture exams! Try it out 👇';
 const SHARE_INTERVAL = 250; // Show popup every N cards
 
@@ -1458,25 +1458,25 @@ function _showSharePopup(milestone) {
 }
 
 function _shareApp() {
-  const text = encodeURIComponent(APP_SHARE_TEXT);
-  const url  = encodeURIComponent(APP_SHARE_URL);
+  const shareText = APP_SHARE_TEXT + '\n' + APP_SHARE_URL;
+  const encodedText = encodeURIComponent(shareText);
 
-  // Try native Web Share API first (works on Android/iOS)
+  // Try native Web Share API first (Android/iOS system sheet)
   if (navigator.share) {
     navigator.share({
       title: 'AGRIMETS Swipe Cards',
       text:  APP_SHARE_TEXT,
       url:   APP_SHARE_URL,
-    }).catch(() => _fallbackShare(text, url));
+    }).catch(() => _fallbackShare(encodedText));
   } else {
-    _fallbackShare(text, url);
+    _fallbackShare(encodedText);
   }
 }
 
-function _fallbackShare(text, url) {
-  // Telegram share link — opens any messaging app chooser
-  const telegramShare = `https://t.me/share/url?url=${url}&text=${text}`;
-  window.open(telegramShare, '_blank');
+function _fallbackShare(encodedText) {
+  // Open WhatsApp share directly
+  const waUrl = `https://wa.me/?text=${encodedText}`;
+  window.open(waUrl, '_blank');
 }
 
 async function boot() {
