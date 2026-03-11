@@ -607,7 +607,7 @@ body {
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   border-radius: var(--r-xl);
-  padding: 24px 22px 22px;
+  padding: 22px 20px 20px;
   display: flex;
   flex-direction: column;
 }
@@ -643,17 +643,21 @@ body {
   font-family: 'Times New Roman', Times, serif;
   font-size: clamp(15px, 4.2vw, 22px);
   font-weight: 700;
-  line-height: 1.55;
+  line-height: 1.65;
   color: #FFFFFF;
-  letter-spacing: 0.1px;
+  letter-spacing: 0.15px;
   flex: 1;
-  display: flex;
-  align-items: center;      /* vertically center short questions */
-  text-align: left;
+  display: block;
+  text-align: justify;
+  text-justify: inter-word;
   text-shadow: 0 1px 2px rgba(0,0,0,0.4);
-  word-break: break-word;
+  word-break: normal;
   overflow-wrap: break-word;
-  hyphens: auto;
+  hyphens: none;
+  -webkit-hyphens: none;
+  /* vertical center via margin auto when content is short */
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .card-hint {
@@ -701,15 +705,19 @@ body {
   font-size: clamp(17px, 5vw, 26px);
   font-weight: 700;
   color: #00FF88;
-  line-height: 1.4;
+  line-height: 1.55;
   letter-spacing: 0.2px;
   flex: 1;
-  display: flex;
-  align-items: center;      /* vertically center short answers */
+  display: block;
+  text-align: justify;
+  text-justify: inter-word;
   text-shadow: 0 0 12px rgba(0,255,136,0.35);
-  word-break: break-word;
+  word-break: normal;
   overflow-wrap: break-word;
-  hyphens: auto;
+  hyphens: none;
+  -webkit-hyphens: none;
+  margin-top: auto;
+  margin-bottom: auto;
 }
 
 .card-question-repeat {
