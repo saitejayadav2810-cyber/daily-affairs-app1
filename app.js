@@ -605,23 +605,30 @@ function _renderCard(question, skipStack) {
 
   // Animate card entrance
   if (card) {
-    card.style.opacity    = '0';
-    card.style.transform  = 'translateY(22px) scale(0.97)';
+    // Hard-reset ALL transforms from the fly-out so position is clean
+    card.classList.remove('card-fly-right', 'card-fly-left', 'card-fly-up', 'card-fly-down', 'card-snap-back');
     card.style.transition = 'none';
-    requestAnimationFrame(() => {
-      card.style.transition = 'opacity 0.10s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)';
-      card.style.opacity    = '1';
-      card.style.transform  = 'translateY(0) scale(1)';
+    card.style.opacity    = '0';
+    card.style.transform  = 'translateY(52px) scale(0.93)'; // always start from below
 
-      // Sync ghost card heights
-      const h  = card.offsetHeight;
-      const g1 = document.getElementById('ghost-card-1');
-      const g2 = document.getElementById('ghost-card-2');
-      if (g1) g1.style.height = h + 'px';
-      if (g2) g2.style.height = h + 'px';
+    // Double rAF: first commits the reset, second starts the transition
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        // Spring float — overshoots slightly then settles (the "floating" feel)
+        card.style.transition = 'opacity 0.18s ease, transform 0.38s cubic-bezier(0.34, 1.4, 0.64, 1)';
+        card.style.opacity    = '1';
+        card.style.transform  = 'translateY(0) scale(1)';
+
+        // Sync ghost heights
+        const h  = card.offsetHeight;
+        const g1 = document.getElementById('ghost-card-1');
+        const g2 = document.getElementById('ghost-card-2');
+        if (g1) g1.style.height = h + 'px';
+        if (g2) g2.style.height = h + 'px';
+      });
     });
 
-    // Re-init swipe engine — half of original 220ms
+    // Re-init swipe engine after entrance begins
     SwipeEngine.destroy();
     setTimeout(() => {
       SwipeEngine.init(card, {
@@ -636,7 +643,7 @@ function _renderCard(question, skipStack) {
         onSwipeLeft:  () => _handleSkip(question),
         onTap:        () => _flipCard(),
       });
-    }, 110);
+    }, 80);
   }
 
   _updateDailyProgress();
