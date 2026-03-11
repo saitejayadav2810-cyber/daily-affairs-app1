@@ -600,7 +600,7 @@ function _renderCard(question) {
         down:  DOM.overlayDown,
       }, {
         onSwipeDown:  () => _flipCard(),
-        onSwipeUp:    () => _handleSkip(question),
+        onSwipeUp:    () => _handleSave(question),
         onSwipeRight: () => _handleSkip(question),
         onSwipeLeft:  () => _handleSkip(question),
         onTap:        () => _flipCard(),
