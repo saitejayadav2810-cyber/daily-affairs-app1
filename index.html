@@ -85,6 +85,10 @@
         <span class="tab-icon">📊</span>
         <span class="tab-label">Progress</span>
       </button>
+      <button class="tab-btn" data-tab="history" id="tab-history">
+        <span class="tab-icon">🕐</span>
+        <span class="tab-label">History</span>
+      </button>
       <button class="tab-btn update-tab-btn" id="tab-update">
         <span class="tab-icon update-icon" id="update-icon">🔄</span>
         <span class="tab-label">Update</span>
@@ -207,6 +211,32 @@
         <div class="empty-icon">🔖</div>
         <p class="empty-title">No saved cards yet</p>
         <p class="empty-sub">Swipe up on a card to save it here</p>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════
+         TAB: HISTORY
+    ════════════════════════ -->
+    <section class="tab-view" id="view-history">
+      <div class="page-header">
+        <h2 class="page-title">History</h2>
+        <span class="page-subtitle" id="history-count-label">0 cards</span>
+      </div>
+
+      <!-- Filter pills -->
+      <div class="hist-filter-row">
+        <button class="hist-filter-btn active" data-filter="all">All</button>
+        <button class="hist-filter-btn" data-filter="done">✓ Done</button>
+        <button class="hist-filter-btn" data-filter="skipped">⏭ Skipped</button>
+        <button class="hist-filter-btn" data-filter="saved">🔖 Saved</button>
+      </div>
+
+      <div class="hist-list" id="history-list"></div>
+
+      <div class="empty-state hidden" id="history-empty">
+        <div class="empty-icon">🕐</div>
+        <p class="empty-title">No history yet</p>
+        <p class="empty-sub">Cards you swipe will appear here</p>
       </div>
     </section>
 
