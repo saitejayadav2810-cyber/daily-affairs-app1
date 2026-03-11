@@ -480,6 +480,8 @@ function markSeen(questionId) {
   if (!seen.includes(questionId)) {
     seen.push(questionId);
     ls_set(LS.SEEN_IDS, seen);
+    // Check if we hit a share milestone (every 250 cards)
+    try { _checkShareMilestone(seen.length); } catch(e) {}
   }
   _updateStats();
 }
@@ -908,6 +910,9 @@ function renderProgressTab() {
   if (DOM.statSaved)  DOM.statSaved.textContent  = saved.length;
   if (DOM.statDays)   DOM.statDays.textContent   = stats.daysActive  || 0;
 
+  // Refresh user count display
+  _initUserCount();
+
   // Weekly heatmap
   _renderHeatmap();
 
@@ -1174,7 +1179,7 @@ function _escHtml(str) {
 //  ► Change CHANNEL_URL to your actual Telegram channel/group link
 // ════════════════════════════════════════════════════════════════
 
-const CHANNEL_URL = 'https://t.me/AGRIMETS_OFFICIAL'; // ← CHANGE THIS
+const CHANNEL_URL = 'https://t.me/YOUR_CHANNEL_USERNAME'; // ← CHANGE THIS
 
 function _showChannelPopup() {
   const overlay = document.getElementById('channel-popup-overlay');
@@ -1210,6 +1215,157 @@ function _showChannelPopup() {
     TG.Haptic.medium();
     setTimeout(_closePopup, 400);
   }, { once: true });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  USER COUNT  — unique visitor counter using localStorage
+//  Uses a simple timestamp-seeded unique ID per device.
+//  Displays total count stored locally; auto-increments on first visit.
+// ════════════════════════════════════════════════════════════════
+
+const COUNT_NAMESPACE = 'agrimets-app';
+const COUNT_KEY       = 'user-visits';
+
+async function _initUserCount() {
+  const countEl = document.getElementById('user-count-val');
+  if (!countEl) return;
+
+  try {
+    // Mark this device if not counted yet
+    const alreadyCounted = ls_get('dca_counted', false);
+    if (!alreadyCounted) {
+      const current = ls_get('dca_user_count', 1);
+      ls_set('dca_user_count', current + 1);
+      ls_set('dca_counted', true);
+    }
+
+    // Try live count from countapi (silent fail if blocked)
+    let displayCount = ls_get('dca_user_count', 1);
+
+    try {
+      const endpoint = alreadyCounted
+        ? `https://api.countapi.xyz/get/${COUNT_NAMESPACE}/${COUNT_KEY}`
+        : `https://api.countapi.xyz/hit/${COUNT_NAMESPACE}/${COUNT_KEY}`;
+
+      const controller = new AbortController();
+      const timeout    = setTimeout(() => controller.abort(), 3000); // 3s timeout
+
+      const res  = await fetch(endpoint, { signal: controller.signal, cache: 'no-store' });
+      clearTimeout(timeout);
+      const data = await res.json();
+      if (data && data.value > 0) {
+        displayCount = data.value;
+        ls_set('dca_user_count', data.value); // cache it locally
+      }
+    } catch (_) {
+      // API blocked/down — use locally cached count, no crash
+    }
+
+    _animateCount(countEl, displayCount);
+
+  } catch (e) {
+    const countEl2 = document.getElementById('user-count-val');
+    if (countEl2) countEl2.textContent = '—';
+  }
+}
+
+function _animateCount(el, target) {
+  const duration = 1200;
+  const start    = Date.now();
+  const from     = 0;
+
+  function tick() {
+    const elapsed  = Date.now() - start;
+    const progress = Math.min(elapsed / duration, 1);
+    // Ease-out
+    const eased    = 1 - Math.pow(1 - progress, 3);
+    const current  = Math.round(from + (target - from) * eased);
+    el.textContent = current.toLocaleString('en-IN');
+    if (progress < 1) requestAnimationFrame(tick);
+  }
+
+  requestAnimationFrame(tick);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SHARE POPUP  — appears every 250 cards seen
+// ════════════════════════════════════════════════════════════════
+
+// ► Change to your actual app/bot link
+const APP_SHARE_URL  = 'https://t.me/YOUR_BOT_USERNAME/YOUR_APP_NAME';
+const APP_SHARE_TEXT = '🌾 I\'m using AGRIMETS Swipe Cards to prepare for agriculture exams! Try it out 👇';
+const SHARE_INTERVAL = 250; // Show popup every N cards
+
+function _checkShareMilestone(totalSeen) {
+  if (totalSeen < SHARE_INTERVAL) return;
+  if (totalSeen % SHARE_INTERVAL !== 0) return;
+
+  // Check if we already showed popup for this milestone
+  const lastMilestone = ls_get('dca_last_share_milestone', 0);
+  if (totalSeen <= lastMilestone) return;
+
+  ls_set('dca_last_share_milestone', totalSeen);
+  setTimeout(() => _showSharePopup(totalSeen), 600);
+}
+
+function _showSharePopup(milestone) {
+  const overlay  = document.getElementById('share-popup-overlay');
+  const closeBtn = document.getElementById('share-popup-close');
+  const shareBtn = document.getElementById('share-main-btn');
+  const skipBtn  = document.getElementById('share-skip-btn');
+  const titleEl  = overlay?.querySelector('.share-popup-title');
+  const msgEl    = overlay?.querySelector('.share-popup-msg');
+
+  if (!overlay) return;
+
+  // Update milestone text
+  if (titleEl) titleEl.textContent = `${milestone} Cards Done! 🎉`;
+  if (msgEl)   msgEl.textContent   =
+    `Amazing! You've studied ${milestone} cards. Share AGRIMETS with your friends and help them prepare too!`;
+
+  overlay.classList.remove('hidden');
+  TG.Haptic.success();
+
+  function _closeShare() {
+    overlay.style.opacity    = '0';
+    overlay.style.transition = 'opacity 0.2s ease';
+    setTimeout(() => {
+      overlay.classList.add('hidden');
+      overlay.style.opacity    = '';
+      overlay.style.transition = '';
+    }, 200);
+  }
+
+  closeBtn?.addEventListener('click', _closeShare, { once: true });
+  skipBtn?.addEventListener('click',  _closeShare, { once: true });
+
+  shareBtn?.addEventListener('click', () => {
+    TG.Haptic.medium();
+    _shareApp();
+    setTimeout(_closeShare, 500);
+  }, { once: true });
+}
+
+function _shareApp() {
+  const text = encodeURIComponent(APP_SHARE_TEXT);
+  const url  = encodeURIComponent(APP_SHARE_URL);
+
+  // Try native Web Share API first (works on Android/iOS)
+  if (navigator.share) {
+    navigator.share({
+      title: 'AGRIMETS Swipe Cards',
+      text:  APP_SHARE_TEXT,
+      url:   APP_SHARE_URL,
+    }).catch(() => _fallbackShare(text, url));
+  } else {
+    _fallbackShare(text, url);
+  }
+}
+
+function _fallbackShare(text, url) {
+  // Telegram share link — opens any messaging app chooser
+  const telegramShare = `https://t.me/share/url?url=${url}&text=${text}`;
+  window.open(telegramShare, '_blank');
 }
 
 async function boot() {
@@ -1254,8 +1410,13 @@ async function boot() {
   DOM.subjectPicker?.classList.remove('hidden');
   renderSubjectPicker();
 
-  // 9. Show channel join popup after short delay (app fully visible)
-  setTimeout(() => _showChannelPopup(), 800);
+  // 9. Load user count (async, non-blocking, never crashes)
+  try { _initUserCount(); } catch(e) { console.warn('[UserCount]', e); }
+
+  // 10. Show channel join popup after short delay
+  setTimeout(() => {
+    try { _showChannelPopup(); } catch(e) { console.warn('[ChannelPopup]', e); }
+  }, 800);
 }
 
 // ── Wait for DOM ──────────────────────────────────────────────
