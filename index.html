@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <meta name="theme-color" content="#0a0a12" />
+
+  <!-- ── NO CACHE: always load fresh files on every open ── -->
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma"        content="no-cache" />
+  <meta http-equiv="Expires"       content="0" />
+
   <title>AGRIMETS</title>
 
   <!-- Telegram Web App SDK -->
@@ -14,7 +20,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet" />
 
-  <link rel="stylesheet" href="style.css" />
+  <!-- Cache-busting: appends ?v=timestamp so browser always loads latest file -->
+  <script>
+    (function() {
+      var v = Date.now();
+      // CSS
+      var css = document.createElement('link');
+      css.rel = 'stylesheet'; css.href = 'style.css?v=' + v;
+      document.head.appendChild(css);
+      // Scripts loaded in order after DOM
+      window._cbv = v;
+    })();
+  </script>
 </head>
 <body>
 
@@ -66,10 +83,6 @@
       <button class="tab-btn" data-tab="progress" id="tab-progress">
         <span class="tab-icon">📊</span>
         <span class="tab-label">Progress</span>
-      </button>
-      <button class="tab-btn update-tab-btn" id="tab-update">
-        <span class="tab-icon update-icon" id="update-icon">🔄</span>
-        <span class="tab-label">Update</span>
       </button>
     </nav>
 
@@ -267,9 +280,21 @@
     <button class="ad-close" id="ad-close">✕</button>
   </div>
 
-  <!-- Scripts -->
-  <script src="telegram.js"></script>
-  <script src="swipe.js"></script>
-  <script src="app.js"></script>
+  <!-- Scripts loaded with cache-busting timestamp -->
+  <script>
+    (function() {
+      var v = window._cbv || Date.now();
+      var scripts = ['telegram.js', 'swipe.js', 'app.js'];
+      var i = 0;
+      function loadNext() {
+        if (i >= scripts.length) return;
+        var s = document.createElement('script');
+        s.src = scripts[i++] + '?v=' + v;
+        s.onload = loadNext;
+        document.body.appendChild(s);
+      }
+      loadNext();
+    })();
+  </script>
 </body>
 </html>
