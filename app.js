@@ -218,7 +218,7 @@ async function fetchQuestions() {
   // ── Serve fresh cache if available ──────────────────────────
   if (cached && Array.isArray(cached) && cached.length > 0 && ageHours < CONFIG.CACHE_TTL_HOURS) {
     setLoaderProgress(100, `✓ Loaded ${cached.length} questions`);
-    await _delay(300);
+    await _delay(120);
     return cached;
   }
 
@@ -352,7 +352,7 @@ async function fetchQuestions() {
   ls_set(LS.QUESTIONS, questions);
   ls_set(LS.CACHE_TIME, Date.now());
 
-  await _delay(200);
+  await _delay(80);
   setLoaderProgress(100, `✓ ${questions.length} questions loaded!`);
   return questions;
 }
@@ -593,7 +593,7 @@ function _renderCard(question) {
     card.style.transition = 'none';
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        card.style.transition = 'opacity 0.2s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        card.style.transition = 'opacity 0.1s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)';
         card.style.opacity    = '1';
         card.style.transform  = 'translateY(0) scale(1)';
 
@@ -621,7 +621,7 @@ function _renderCard(question) {
         onSwipeLeft:  () => _handleSkip(question),
         onTap:        () => _flipCard(),
       });
-    }, 220);
+    }, 50);
   }
 
   _updateDailyProgress();
@@ -666,21 +666,21 @@ function _handleNext(question) {
   _recordHistory(question, 'done');
   markSeen(question.id);
   TG.Haptic.success();
-  setTimeout(loadNextCard, 220);
+  setTimeout(loadNextCard, 120);
 }
 
 function _handleSkip(question) {
   _recordHistory(question, 'skipped');
   skipCard(question.id);
   markSeen(question.id);
-  setTimeout(loadNextCard, 220);
+  setTimeout(loadNextCard, 120);
 }
 
 function _handleSave(question) {
   _recordHistory(question, 'saved');
   saveCard(question);
   markSeen(question.id);
-  setTimeout(loadNextCard, 220);
+  setTimeout(loadNextCard, 120);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1176,7 +1176,7 @@ async function manualRefresh() {
     showToast('❌ Update failed — check connection', 3000);
     TG.Haptic.error();
   } finally {
-    setTimeout(() => btn.classList.remove('updating'), 800);
+    setTimeout(() => btn.classList.remove('updating'), 400);
   }
 }
 
@@ -1311,7 +1311,7 @@ function _showChannelPopup() {
     overlay.style.animation = 'none';
     overlay.style.opacity   = '0';
     overlay.style.transition = 'opacity 0.2s ease';
-    setTimeout(() => overlay.classList.add('hidden'), 200);
+    setTimeout(() => overlay.classList.add('hidden'), 120);
     TG.Haptic.select();
   }
 
@@ -1324,7 +1324,7 @@ function _showChannelPopup() {
   // Join button — opens channel then closes popup
   joinBtn?.addEventListener('click', () => {
     TG.Haptic.medium();
-    setTimeout(_closePopup, 400);
+    setTimeout(_closePopup, 200);
   }, { once: true });
 }
 
@@ -1381,7 +1381,7 @@ async function _initUserCount() {
 }
 
 function _animateCount(el, target) {
-  const duration = 1200;
+  const duration = 500;
   const start    = Date.now();
   const from     = 0;
 
@@ -1416,7 +1416,7 @@ function _checkShareMilestone(totalSeen) {
   if (totalSeen <= lastMilestone) return;
 
   ls_set('dca_last_share_milestone', totalSeen);
-  setTimeout(() => _showSharePopup(totalSeen), 600);
+  setTimeout(() => _showSharePopup(totalSeen), 250);
 }
 
 function _showSharePopup(milestone) {
@@ -1453,7 +1453,7 @@ function _showSharePopup(milestone) {
   shareBtn?.addEventListener('click', () => {
     TG.Haptic.medium();
     _shareApp();
-    setTimeout(_closeShare, 500);
+    setTimeout(_closeShare, 200);
   }, { once: true });
 }
 
@@ -1509,12 +1509,12 @@ async function boot() {
   _initButtons();
 
   // 7. Dismiss splash
-  await _delay(600);
+  await _delay(200);
   DOM.splash?.classList.add('fade-out');
   setTimeout(() => {
     DOM.splash?.classList.add('hidden');
     DOM.app?.classList.remove('hidden');
-  }, 500);
+  }, 200);
 
   // 8. Show subject picker (card area hidden by default)
   DOM.cardArea?.classList.add('hidden');
@@ -1527,7 +1527,7 @@ async function boot() {
   // 10. Show channel join popup after short delay
   setTimeout(() => {
     try { _showChannelPopup(); } catch(e) { console.warn('[ChannelPopup]', e); }
-  }, 800);
+  }, 400);
 }
 
 // ── Wait for DOM ──────────────────────────────────────────────
