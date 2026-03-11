@@ -58,6 +58,8 @@ let State = {
   sessionSaved:    0,       // Saved this session
   sessionSkipped:  0,       // Skipped this session
   activeSubject:   null,    // null = show subject picker
+  sessionStack:    [],      // Cards seen this session in order [{card, index}]
+  stackPos:        -1,      // Current position in sessionStack (-1 = tip)
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -100,6 +102,10 @@ function _cacheDom() {
     overlayLeft:       document.getElementById('overlay-left'),
     overlayUp:         document.getElementById('overlay-up'),
     overlayDown:       document.getElementById('overlay-down'),
+
+    // Arena nav arrows
+    btnCardBack:       document.getElementById('btn-card-back'),
+    btnCardFwd:        document.getElementById('btn-card-fwd'),
 
     // Action buttons
     btnSkip:           document.getElementById('btn-skip'),
@@ -218,7 +224,7 @@ async function fetchQuestions() {
   // ── Serve fresh cache if available ──────────────────────────
   if (cached && Array.isArray(cached) && cached.length > 0 && ageHours < CONFIG.CACHE_TTL_HOURS) {
     setLoaderProgress(100, `✓ Loaded ${cached.length} questions`);
-    await _delay(120);
+    await _delay(300);
     return cached;
   }
 
@@ -352,7 +358,7 @@ async function fetchQuestions() {
   ls_set(LS.QUESTIONS, questions);
   ls_set(LS.CACHE_TIME, Date.now());
 
-  await _delay(80);
+  await _delay(200);
   setLoaderProgress(100, `✓ ${questions.length} questions loaded!`);
   return questions;
 }
@@ -552,8 +558,19 @@ function _renderStreakUI(streak) {
 //  CARD RENDERING
 // ════════════════════════════════════════════════════════════════
 
-function _renderCard(question) {
+function _renderCard(question, skipStack) {
   if (!question) return;
+
+  // ── Push to session stack (unless navigating within stack) ──
+  if (!skipStack) {
+    // Truncate any forward history if we navigated back then moved forward normally
+    if (State.stackPos >= 0 && State.stackPos < State.sessionStack.length - 1) {
+      State.sessionStack = State.sessionStack.slice(0, State.stackPos + 1);
+    }
+    State.sessionStack.push({ question, index: State.currentIndex });
+    State.stackPos = State.sessionStack.length - 1;
+  }
+  _updateArrows();
 
   // Reset flip state
   State.isFlipped = false;
@@ -593,7 +610,7 @@ function _renderCard(question) {
     card.style.transition = 'none';
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        card.style.transition = 'opacity 0.1s ease, transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        card.style.transition = 'opacity 0.2s ease, transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)';
         card.style.opacity    = '1';
         card.style.transform  = 'translateY(0) scale(1)';
 
@@ -616,15 +633,43 @@ function _renderCard(question) {
         down:  DOM.overlayDown,
       }, {
         onSwipeDown:  () => _flipCard(),
-        onSwipeUp:    () => _handleSave(question),       // ↑ save
+        onSwipeUp:    () => _handleSave(question),
         onSwipeRight: () => _handleSkip(question),
         onSwipeLeft:  () => _handleSkip(question),
         onTap:        () => _flipCard(),
       });
-    }, 50);
+    }, 220);
   }
 
   _updateDailyProgress();
+}
+
+// ── Show/hide back & forward arrows based on stack position ──
+function _updateArrows() {
+  const canBack = State.stackPos > 0;
+  const canFwd  = State.stackPos >= 0 && State.stackPos < State.sessionStack.length - 1;
+  DOM.btnCardBack?.classList.toggle('hidden', !canBack);
+  DOM.btnCardFwd?.classList.toggle('hidden',  !canFwd);
+}
+
+// ── Navigate back one card in session stack ──
+function _goCardBack() {
+  if (State.stackPos <= 0) return;
+  State.stackPos--;
+  const entry = State.sessionStack[State.stackPos];
+  State.currentIndex = entry.index;
+  TG.Haptic.light();
+  _renderCard(entry.question, true);
+}
+
+// ── Navigate forward one card in session stack ──
+function _goCardFwd() {
+  if (State.stackPos >= State.sessionStack.length - 1) return;
+  State.stackPos++;
+  const entry = State.sessionStack[State.stackPos];
+  State.currentIndex = entry.index;
+  TG.Haptic.light();
+  _renderCard(entry.question, true);
 }
 
 function _flipCard() {
@@ -666,21 +711,21 @@ function _handleNext(question) {
   _recordHistory(question, 'done');
   markSeen(question.id);
   TG.Haptic.success();
-  setTimeout(loadNextCard, 120);
+  setTimeout(loadNextCard, 220);
 }
 
 function _handleSkip(question) {
   _recordHistory(question, 'skipped');
   skipCard(question.id);
   markSeen(question.id);
-  setTimeout(loadNextCard, 120);
+  setTimeout(loadNextCard, 220);
 }
 
 function _handleSave(question) {
   _recordHistory(question, 'saved');
   saveCard(question);
   markSeen(question.id);
-  setTimeout(loadNextCard, 120);
+  setTimeout(loadNextCard, 220);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -808,10 +853,12 @@ function _makeSubjectCard(name, count, icon, color, isAll) {
 
 function selectSubject(subject) {
   TG.Haptic.medium();
-  State.activeSubject = subject;
-  State.currentIndex  = 0;
-  State.sessionSaved  = 0;
+  State.activeSubject  = subject;
+  State.currentIndex   = 0;
+  State.sessionSaved   = 0;
   State.sessionSkipped = 0;
+  State.sessionStack   = [];
+  State.stackPos       = -1;
 
   // Filter questions
   const pool = subject === '__ALL__'
@@ -1176,7 +1223,7 @@ async function manualRefresh() {
     showToast('❌ Update failed — check connection', 3000);
     TG.Haptic.error();
   } finally {
-    setTimeout(() => btn.classList.remove('updating'), 400);
+    setTimeout(() => btn.classList.remove('updating'), 800);
   }
 }
 
@@ -1187,6 +1234,10 @@ function _initButtons() {
   DOM.btnBackSubjects?.addEventListener('click', () => {
     showSubjectPicker();
   });
+
+  // ── Arena back / forward arrows ────────────────────────────
+  DOM.btnCardBack?.addEventListener('click', () => _goCardBack());
+  DOM.btnCardFwd?.addEventListener('click',  () => _goCardFwd());
 
   DOM.btnSkip?.addEventListener('click', () => {
     const q = State.dailyCards[State.currentIndex];
@@ -1311,7 +1362,7 @@ function _showChannelPopup() {
     overlay.style.animation = 'none';
     overlay.style.opacity   = '0';
     overlay.style.transition = 'opacity 0.2s ease';
-    setTimeout(() => overlay.classList.add('hidden'), 120);
+    setTimeout(() => overlay.classList.add('hidden'), 200);
     TG.Haptic.select();
   }
 
@@ -1324,7 +1375,7 @@ function _showChannelPopup() {
   // Join button — opens channel then closes popup
   joinBtn?.addEventListener('click', () => {
     TG.Haptic.medium();
-    setTimeout(_closePopup, 200);
+    setTimeout(_closePopup, 400);
   }, { once: true });
 }
 
@@ -1381,7 +1432,7 @@ async function _initUserCount() {
 }
 
 function _animateCount(el, target) {
-  const duration = 500;
+  const duration = 1200;
   const start    = Date.now();
   const from     = 0;
 
@@ -1404,8 +1455,8 @@ function _animateCount(el, target) {
 
 // ► Change to your actual app/bot link
 const APP_SHARE_URL  = 'https://t.me/Agrimets_bot';
-const APP_SHARE_TEXT = '🌾 I\'m using AGRIMETS Swipe Cards to prepare for agriculture exams! Try it out 👇';
-const SHARE_INTERVAL = 250; // Show popup every N cards
+const APP_SHARE_TEXT = '🌾 I\'m using AGRIMETS Swipe Cards to prepare for agriculture exams! 📚\n\nJoin me and ace your exams 👇\nhttps://t.me/Agrimets_bot';
+const SHARE_INTERVAL = 200; // Show popup every N cards
 
 function _checkShareMilestone(totalSeen) {
   if (totalSeen < SHARE_INTERVAL) return;
@@ -1416,7 +1467,7 @@ function _checkShareMilestone(totalSeen) {
   if (totalSeen <= lastMilestone) return;
 
   ls_set('dca_last_share_milestone', totalSeen);
-  setTimeout(() => _showSharePopup(totalSeen), 250);
+  setTimeout(() => _showSharePopup(totalSeen), 600);
 }
 
 function _showSharePopup(milestone) {
@@ -1453,30 +1504,24 @@ function _showSharePopup(milestone) {
   shareBtn?.addEventListener('click', () => {
     TG.Haptic.medium();
     _shareApp();
-    setTimeout(_closeShare, 200);
+    setTimeout(_closeShare, 500);
   }, { once: true });
 }
 
 function _shareApp() {
-  const shareText = APP_SHARE_TEXT + '\n' + APP_SHARE_URL;
-  const encodedText = encodeURIComponent(shareText);
+  const fullText    = encodeURIComponent(APP_SHARE_TEXT);
+  const waUrl       = `https://wa.me/?text=${fullText}`;
 
-  // Try native Web Share API first (Android/iOS system sheet)
+  // Try native share sheet first (Android system chooser includes WhatsApp)
   if (navigator.share) {
     navigator.share({
       title: 'AGRIMETS Swipe Cards',
       text:  APP_SHARE_TEXT,
-      url:   APP_SHARE_URL,
-    }).catch(() => _fallbackShare(encodedText));
+    }).catch(() => window.open(waUrl, '_blank'));
   } else {
-    _fallbackShare(encodedText);
+    // Fallback: open WhatsApp directly
+    window.open(waUrl, '_blank');
   }
-}
-
-function _fallbackShare(encodedText) {
-  // Open WhatsApp share directly
-  const waUrl = `https://wa.me/?text=${encodedText}`;
-  window.open(waUrl, '_blank');
 }
 
 async function boot() {
@@ -1509,12 +1554,12 @@ async function boot() {
   _initButtons();
 
   // 7. Dismiss splash
-  await _delay(200);
+  await _delay(600);
   DOM.splash?.classList.add('fade-out');
   setTimeout(() => {
     DOM.splash?.classList.add('hidden');
     DOM.app?.classList.remove('hidden');
-  }, 200);
+  }, 500);
 
   // 8. Show subject picker (card area hidden by default)
   DOM.cardArea?.classList.add('hidden');
@@ -1527,7 +1572,7 @@ async function boot() {
   // 10. Show channel join popup after short delay
   setTimeout(() => {
     try { _showChannelPopup(); } catch(e) { console.warn('[ChannelPopup]', e); }
-  }, 400);
+  }, 800);
 }
 
 // ── Wait for DOM ──────────────────────────────────────────────
