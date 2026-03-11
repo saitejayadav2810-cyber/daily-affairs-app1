@@ -528,11 +528,11 @@ body {
 .card-arena {
   flex: 1;
   display: flex;
-  align-items: flex-start;
+  align-items: center;        /* vertical center in available space */
   justify-content: center;
   position: relative;
   padding: 12px 24px 4px;
-  min-height: 300px; /* give absolute children a real container height */
+  min-height: 300px;
 }
 
 /* ── CARD BASE ──────────────────────────────────────────────── */
@@ -540,21 +540,21 @@ body {
   position: absolute;
   left: 0;
   right: 0;
-  margin: 0 auto;           /* horizontal center without CSS transform */
-  width: calc(100% - 48px); /* 24px side padding × 2 */
+  margin: 0 auto;
+  width: calc(100% - 48px);
   max-width: 360px;
   border-radius: var(--r-xl);
-  transform-origin: bottom center;
+  transform-origin: center center;
   user-select: none;
   -webkit-user-select: none;
 }
 
-/* Ghost cards (stack depth effect) */
+/* Ghost cards stay absolute, anchored to arena center */
 .ghost-card {
   background: var(--surface-2);
   border: 1px solid var(--glass-border);
-  height: 120px;
   pointer-events: none;
+  height: 120px;
 }
 
 .ghost-1 {
@@ -567,8 +567,12 @@ body {
   opacity: 0.25;
 }
 
-/* Active card */
+/* Active card — position:relative so flex centers it vertically */
 .active-card {
+  position: relative !important; /* override .card absolute */
+  left: auto !important;
+  right: auto !important;
+  margin: 0 auto;
   background: var(--surface);
   border: 1px solid var(--glass-border);
   box-shadow: var(--shadow-card);
@@ -577,10 +581,9 @@ body {
   will-change: transform;
   transition: box-shadow 0.3s;
   z-index: 5;
-  /* 3D flip container */
   perspective: 1200px;
   min-height: 280px;
-  height: auto;             /* let card grow with content */
+  height: auto;
 }
 
 .active-card:active { cursor: grabbing; }
