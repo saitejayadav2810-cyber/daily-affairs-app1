@@ -96,7 +96,7 @@ body {
   justify-content: center;
   gap: 48px;
   z-index: 9999;
-  transition: opacity 0.5s ease, transform 0.5s ease;
+  transition: opacity 0.2s ease, transform 0.2s ease;
 }
 
 .splash.fade-out {
@@ -155,7 +155,7 @@ body {
   background: linear-gradient(90deg, var(--cyan), #3d5afe);
   border-radius: 99px;
   width: 0%;
-  transition: width 0.4s ease;
+  transition: width 0.15s ease;
   box-shadow: 0 0 12px var(--cyan);
 }
 
@@ -218,7 +218,7 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-  transition: background 0.2s;
+  transition: background 0.08s;
 }
 
 .icon-btn:active { background: var(--cyan-dim); }
@@ -258,7 +258,7 @@ body {
   cursor: pointer;
   padding: 8px 0;
   color: var(--text-muted);
-  transition: color 0.2s;
+  transition: color 0.08s;
   position: relative;
 }
 
@@ -378,7 +378,7 @@ body {
   border-radius: var(--r-lg);
   padding: 18px 14px;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: all 0.1s ease;
   position: relative;
   overflow: hidden;
   display: flex;
@@ -432,7 +432,7 @@ body {
 
 /* animate cards in */
 .subject-card {
-  animation: fade-up 0.3s ease both;
+  animation: fade-up 0.15s ease both;
 }
 
 /* ── CARD TOPBAR ─────────────────────────────────────────────── */
@@ -457,7 +457,7 @@ body {
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 600;
-  transition: all 0.15s;
+  transition: all 0.08s;
   flex-shrink: 0;
   -webkit-tap-highlight-color: transparent;
 }
@@ -521,7 +521,7 @@ body {
   height: 100%;
   background: linear-gradient(90deg, var(--cyan), #3d5afe);
   border-radius: 99px;
-  transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: width 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   box-shadow: 0 0 8px var(--cyan-glow);
 }
 
@@ -591,7 +591,7 @@ body {
   min-height: 280px;        /* baseline height for short questions */
   height: auto;             /* expand naturally with long questions */
   display: grid;
-  transition: transform 0.25s cubic-bezier(0.23, 1, 0.32, 1);
+  transition: transform 0.15s cubic-bezier(0.23, 1, 0.32, 1);
   transform-style: preserve-3d;
 }
 
@@ -732,7 +732,7 @@ body {
   letter-spacing: 1px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.1s;
+  transition: opacity 0.05s;
   z-index: 10;
 }
 
@@ -780,7 +780,7 @@ body {
   border-radius: var(--r-md);
   padding: 10px 14px;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.1s;
   color: var(--text-secondary);
   min-width: 64px;
 }
@@ -835,7 +835,7 @@ body {
   justify-content: center;
   padding: 32px 24px;
   text-align: center;
-  animation: fade-up 0.5s ease forwards;
+  animation: fade-up 0.25s ease forwards;
 }
 
 @keyframes fade-up {
@@ -846,7 +846,7 @@ body {
 .completion-icon {
   font-size: 64px;
   margin-bottom: 16px;
-  animation: bounce-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: bounce-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes bounce-in {
@@ -907,7 +907,7 @@ body {
   font-weight: 700;
   color: #000;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.1s;
   box-shadow: 0 8px 32px rgba(0,229,255,0.3);
 }
 
@@ -956,8 +956,8 @@ body {
   padding: 16px;
   position: relative;
   overflow: hidden;
-  animation: fade-up 0.3s ease forwards;
-  animation-delay: calc(var(--i, 0) * 0.05s);
+  animation: fade-up 0.15s ease forwards;
+  animation-delay: calc(var(--i, 0) * 0.02s);
   opacity: 0;
 }
 
@@ -1199,7 +1199,7 @@ body {
   height: 100%;
   background: linear-gradient(90deg, var(--cyan), #3d5afe);
   border-radius: 99px;
-  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .cat-bar-count {
@@ -1225,7 +1225,7 @@ body {
   font-weight: 700;
   color: var(--red);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.1s;
 }
 
 .reset-btn:active { background: var(--red-dim); }
@@ -1255,7 +1255,7 @@ body {
   color: var(--text-primary);
   white-space: nowrap;
   opacity: 0;
-  transition: opacity 0.25s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: opacity 0.12s, transform 0.12s cubic-bezier(0.34, 1.56, 0.64, 1);
   pointer-events: none;
   z-index: 9000;
   box-shadow: 0 8px 32px rgba(0,0,0,0.4);
@@ -1280,7 +1280,7 @@ body {
   align-items: flex-end;
   justify-content: center;
   padding-bottom: calc(var(--safe-bottom) + 12px);
-  animation: overlay-in 0.25s ease;
+  animation: overlay-in 0.12s ease;
 }
 
 .channel-popup-overlay.hidden {
@@ -1302,7 +1302,7 @@ body {
   position: relative;
   text-align: center;
   box-shadow: 0 -8px 48px rgba(0,229,255,0.08), 0 0 0 1px rgba(255,255,255,0.04);
-  animation: popup-slide-up 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: popup-slide-up 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 @keyframes popup-slide-up {
@@ -1325,7 +1325,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.08s, color 0.08s;
 }
 
 .channel-popup-close:active {
@@ -1374,7 +1374,7 @@ body {
   letter-spacing: 0.3px;
   text-decoration: none;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.08s, box-shadow 0.08s;
   box-shadow: 0 6px 24px rgba(0,200,83,0.5), 0 2px 8px rgba(0,230,118,0.3);
   margin-bottom: 12px;
 }
@@ -1398,7 +1398,7 @@ body {
   cursor: pointer;
   padding: 8px 20px;
   width: 100%;
-  transition: color 0.15s;
+  transition: color 0.08s;
 }
 
 .channel-skip-btn:active {
@@ -1456,35 +1456,35 @@ body {
    SWIPE ANIMATION STATES (set by swipe.js)
 ═══════════════════════════════════════════════════════════════ */
 .card-fly-right {
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity    0.2s ease !important;
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity    0.12s ease !important;
   transform: translateX(140%) rotate(25deg) !important;
   opacity: 0 !important;
 }
 
 .card-fly-left {
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity    0.2s ease !important;
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity    0.12s ease !important;
   transform: translateX(-140%) rotate(-25deg) !important;
   opacity: 0 !important;
 }
 
 .card-fly-up {
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity    0.2s ease !important;
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity    0.12s ease !important;
   transform: translateY(-140%) scale(0.8) !important;
   opacity: 0 !important;
 }
 
 .card-fly-down {
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              opacity    0.2s ease !important;
+  transition: transform 0.12s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity    0.12s ease !important;
   transform: translateY(140%) scale(0.8) !important;
   opacity: 0 !important;
 }
 
 .card-snap-back {
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
 }
 
 /* ═══════════════════════════════════════════════════════════════
@@ -1576,7 +1576,7 @@ body {
   align-items: flex-end;
   justify-content: center;
   padding-bottom: calc(var(--safe-bottom) + 12px);
-  animation: overlay-in 0.25s ease;
+  animation: overlay-in 0.12s ease;
 }
 
 .share-popup-overlay.hidden { display: none !important; }
@@ -1593,7 +1593,7 @@ body {
   box-shadow:
     0 -12px 60px rgba(0,230,118,0.12),
     0 0 0 1px rgba(255,255,255,0.04);
-  animation: popup-slide-up 0.38s cubic-bezier(0.34, 1.56, 0.64, 1);
+  animation: popup-slide-up 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .share-popup-close {
@@ -1609,7 +1609,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: background 0.15s;
+  transition: background 0.08s;
 }
 
 .share-popup-close:active { background: rgba(255,255,255,0.18); }
@@ -1655,7 +1655,7 @@ body {
   font-size: 16px;
   font-weight: 800;
   cursor: pointer;
-  transition: transform 0.15s, box-shadow 0.15s;
+  transition: transform 0.08s, box-shadow 0.08s;
   box-shadow: 0 6px 24px rgba(0,200,83,0.45);
   margin-bottom: 14px;
 }
@@ -1674,7 +1674,7 @@ body {
   cursor: pointer;
   padding: 8px 20px;
   width: 100%;
-  transition: color 0.15s;
+  transition: color 0.08s;
 }
 
 .share-skip-btn:active { color: rgba(255,255,255,0.6); }
@@ -1705,7 +1705,7 @@ body {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.08s;
   white-space: nowrap;
 }
 .hist-filter-btn.active {
@@ -1728,8 +1728,8 @@ body {
   border: 1px solid var(--glass-border);
   border-radius: var(--r-lg);
   padding: 14px 16px;
-  animation: fade-up 0.25s ease both;
-  animation-delay: calc(var(--i) * 0.03s);
+  animation: fade-up 0.12s ease both;
+  animation-delay: calc(var(--i) * 0.015s);
 }
 .hist-item-top {
   display: flex;
@@ -1789,7 +1789,7 @@ body {
   padding: 5px 12px;
   cursor: pointer;
   width: 100%;
-  transition: background 0.15s, color 0.15s;
+  transition: background 0.08s, color 0.08s;
 }
 .hist-toggle-btn:active {
   background: var(--surface-2);
