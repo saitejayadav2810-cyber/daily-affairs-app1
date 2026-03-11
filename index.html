@@ -221,6 +221,18 @@
         <span class="page-subtitle" id="today-date-label">—</span>
       </div>
 
+      <!-- ── USER COUNT BANNER ── -->
+      <div class="user-count-banner" id="user-count-banner">
+        <div class="user-count-left">
+          <span class="user-count-icon">👥</span>
+          <div>
+            <div class="user-count-label">App Users</div>
+            <div class="user-count-sub">Unique individuals</div>
+          </div>
+        </div>
+        <div class="user-count-number" id="user-count-val">—</div>
+      </div>
+
       <!-- Stats grid -->
       <div class="stats-grid">
         <div class="stat-card stat-streak">
@@ -279,14 +291,14 @@
       <button class="channel-popup-close" id="channel-popup-close" aria-label="Close">✕</button>
 
       <div class="channel-popup-icon">📢</div>
-      <h2 class="channel-popup-title">Join Our Group!</h2>
+      <h2 class="channel-popup-title">Join Our Channel!</h2>
       <p class="channel-popup-msg">
         Get daily updates, new question sets, and announcements on our official Telegram channel.
       </p>
 
       <a class="channel-join-btn" id="channel-join-btn"
          href="https://t.me/YOUR_CHANNEL_USERNAME" target="_blank">
-        <span>Join Group</span>
+        <span>Join Channel</span>
         <span class="channel-btn-arrow">→</span>
       </a>
 
@@ -312,7 +324,21 @@
     <button class="ad-close" id="ad-close">✕</button>
   </div>
 
-  <!-- Scripts loaded with cache-busting timestamp -->
+  <!-- ═══════════════════════════════════════════════
+       SHARE POPUP  (every 250 cards)
+  ════════════════════════════════════════════════ -->
+  <div class="share-popup-overlay hidden" id="share-popup-overlay">
+    <div class="share-popup">
+      <button class="share-popup-close" id="share-popup-close">✕</button>
+      <div class="share-popup-icon">🎉</div>
+      <h2 class="share-popup-title">250 Cards Done!</h2>
+      <p class="share-popup-msg">You're on fire! Share AGRIMETS with friends and help them ace their exams too.</p>
+      <button class="share-main-btn" id="share-main-btn">
+        <span>📤 Share with Friends</span>
+      </button>
+      <button class="share-skip-btn" id="share-skip-btn">Continue studying</button>
+    </div>
+  </div>
   <script>
     (function() {
       var v = window._cbv || Date.now();
