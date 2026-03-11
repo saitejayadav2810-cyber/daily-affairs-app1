@@ -532,13 +532,16 @@ body {
   justify-content: center;
   position: relative;
   padding: 12px 24px 4px;
-  min-height: 0;
+  min-height: 300px; /* give absolute children a real container height */
 }
 
 /* ── CARD BASE ──────────────────────────────────────────────── */
 .card {
   position: absolute;
-  width: 100%;
+  left: 0;
+  right: 0;
+  margin: 0 auto;           /* horizontal center without CSS transform */
+  width: calc(100% - 48px); /* 24px side padding × 2 */
   max-width: 360px;
   border-radius: var(--r-xl);
   transform-origin: bottom center;
@@ -577,6 +580,7 @@ body {
   /* 3D flip container */
   perspective: 1200px;
   min-height: 280px;
+  height: auto;             /* let card grow with content */
 }
 
 .active-card:active { cursor: grabbing; }
@@ -584,7 +588,8 @@ body {
 .card-inner {
   position: relative;
   width: 100%;
-  min-height: 280px;
+  min-height: 280px;        /* baseline height for short questions */
+  height: auto;             /* expand naturally with long questions */
   display: grid;
   transition: transform 0.25s cubic-bezier(0.23, 1, 0.32, 1);
   transform-style: preserve-3d;
@@ -640,9 +645,12 @@ body {
   letter-spacing: 0.1px;
   flex: 1;
   display: flex;
-  align-items: flex-start;
+  align-items: center;      /* vertically center short questions */
+  text-align: left;
   text-shadow: 0 1px 2px rgba(0,0,0,0.4);
   word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .card-hint {
@@ -694,9 +702,11 @@ body {
   letter-spacing: 0.2px;
   flex: 1;
   display: flex;
-  align-items: flex-start;
+  align-items: center;      /* vertically center short answers */
   text-shadow: 0 0 12px rgba(0,255,136,0.35);
   word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .card-question-repeat {
