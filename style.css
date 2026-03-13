@@ -2188,78 +2188,90 @@ body {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   FEATURE: SPRINT RESULT SCREEN
+   FEATURE: SPRINT RESULT SCREEN  (full scrollable page)
 ═══════════════════════════════════════════════════════════════ */
 .sprint-result {
   position: absolute;
   inset: 0;
   background: var(--bg);
   display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  animation: fade-up 0.25s ease;
+  flex-direction: column;
+  overflow: hidden;
+  animation: fade-up 0.22s ease;
   z-index: 10;
 }
 
-.sprint-result-inner {
-  text-align: center;
-  width: 100%;
-  max-width: 360px;
+/* ── Sticky summary header ── */
+.sprint-result-header {
+  flex-shrink: 0;
+  background: linear-gradient(180deg, var(--bg) 80%, transparent);
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.sprint-result-hero {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 14px;
 }
 
 .sprint-result-icon {
-  font-size: 64px;
+  font-size: 44px;
   line-height: 1;
-  margin-bottom: 16px;
-  filter: drop-shadow(0 0 20px rgba(255,171,0,0.6));
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 16px rgba(255,171,0,0.6));
   animation: pulse-glow 2s ease-in-out infinite;
 }
 
 .sprint-result-title {
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 20px;
   font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.5px;
-  margin-bottom: 20px;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
+}
+
+.sprint-result-pct-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 4px;
 }
 
 .sprint-result-pct {
   font-family: var(--font-display);
-  font-size: 80px;
+  font-size: 42px;
   font-weight: 800;
   line-height: 1;
   background: linear-gradient(135deg, var(--amber), #FF6D00);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 6px;
 }
 
 .sprint-result-pct-label {
   font-size: 12px;
   text-transform: uppercase;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   color: var(--text-muted);
   font-weight: 700;
-  margin-bottom: 32px;
 }
 
 .sprint-result-stats {
   display: flex;
-  justify-content: center;
   gap: 0;
-  margin-bottom: 36px;
   background: var(--surface);
   border: 1px solid var(--glass-border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   overflow: hidden;
+  margin-bottom: 14px;
 }
 
 .sprint-rs {
   flex: 1;
-  padding: 20px 12px;
+  padding: 14px 10px;
   text-align: center;
   position: relative;
 }
@@ -2274,7 +2286,7 @@ body {
 
 .sprint-rs-val {
   font-family: var(--font-display);
-  font-size: 32px;
+  font-size: 26px;
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1;
@@ -2284,28 +2296,27 @@ body {
 .sprint-rs-val.red   { color: var(--red); }
 
 .sprint-rs-label {
-  font-size: 11px;
+  font-size: 10px;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--text-muted);
   font-weight: 600;
-  margin-top: 6px;
+  margin-top: 5px;
 }
 
 .sprint-result-actions {
   display: flex;
-  flex-direction: column;
   gap: 10px;
 }
 
 .sprint-again-btn {
-  width: 100%;
-  padding: 16px;
+  flex: 1;
+  padding: 13px 10px;
   background: linear-gradient(135deg, rgba(255,171,0,0.20), rgba(255,109,0,0.16));
   border: 1.5px solid rgba(255,171,0,0.50);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   font-family: var(--font-display);
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 700;
   color: var(--amber);
   cursor: pointer;
@@ -2315,15 +2326,15 @@ body {
 
 .sprint-again-btn:active {
   transform: scale(0.97);
-  box-shadow: 0 0 24px rgba(255,171,0,0.25);
+  box-shadow: 0 0 20px rgba(255,171,0,0.22);
 }
 
 .sprint-home-btn {
-  width: 100%;
-  padding: 14px;
+  flex: 1;
+  padding: 13px 10px;
   background: none;
   border: 1px solid var(--glass-border);
-  border-radius: var(--r-lg);
+  border-radius: var(--r-md);
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 600;
@@ -2336,6 +2347,123 @@ body {
 .sprint-home-btn:active {
   color: var(--text-secondary);
   border-color: rgba(255,255,255,0.15);
+}
+
+/* ── Scrollable review body ── */
+.sprint-review-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 0 calc(var(--tabbar-h) + var(--safe-bottom) + 16px);
+}
+
+.sprint-review-section {
+  padding: 18px 16px 4px;
+}
+
+.sprint-review-section-title {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  margin-bottom: 12px;
+  padding: 8px 14px;
+  border-radius: var(--r-md);
+  display: inline-block;
+}
+
+.sprint-review-section-unknown .sprint-review-section-title {
+  color: var(--red);
+  background: var(--red-dim);
+  border: 1px solid rgba(255,82,82,0.20);
+}
+
+.sprint-review-section-known .sprint-review-section-title {
+  color: var(--green);
+  background: var(--green-dim);
+  border: 1px solid rgba(0,230,118,0.20);
+}
+
+.sprint-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 8px;
+}
+
+/* ── Individual review cards ── */
+.sprint-review-card {
+  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  padding: 14px 16px;
+  position: relative;
+  overflow: hidden;
+  animation: fade-up 0.15s ease forwards;
+  animation-delay: calc(var(--i, 0) * 0.03s);
+  opacity: 0;
+}
+
+.sprint-review-card::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  width: 3px;
+  border-radius: 0 2px 2px 0;
+}
+
+.sprint-review-unknown::before { background: var(--red); }
+.sprint-review-known::before   { background: var(--green); }
+
+.sprint-review-category {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  opacity: 0.75;
+}
+
+.sprint-review-unknown .sprint-review-category { color: var(--red); }
+.sprint-review-known   .sprint-review-category { color: var(--green); }
+
+.sprint-review-question {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+.sprint-review-answer {
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 12px;
+  border-radius: var(--r-sm);
+  line-height: 1.5;
+}
+
+.sprint-review-unknown .sprint-review-answer {
+  color: var(--red);
+  background: var(--red-dim);
+  border: 1px solid rgba(255,82,82,0.15);
+}
+
+.sprint-review-known .sprint-review-answer {
+  color: var(--green);
+  background: var(--green-dim);
+  border: 1px solid rgba(0,230,118,0.15);
+}
+
+.sprint-review-empty {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+  font-style: italic;
 }
 
 /* Make #view-home a relative container so sprint-result can overlay it */
