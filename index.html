@@ -63,10 +63,6 @@
         <span class="app-title">AGRIMETS</span>
       </div>
       <div class="header-right">
-        <button class="install-btn" id="install-btn" title="Install App">
-          <span class="install-btn-icon">⬇</span>
-          <span class="install-btn-label">Install</span>
-        </button>
         <button class="icon-btn" id="streak-btn" title="Streak">
           <span class="streak-fire">🔥</span>
           <span class="streak-count" id="header-streak">0</span>
@@ -466,41 +462,6 @@
   </div>
 
   <!-- ═══════════════════════════════════════════════
-       INSTALL INSTRUCTIONS POPUP
-  ════════════════════════════════════════════════ -->
-  <div class="install-popup-overlay hidden" id="install-popup-overlay">
-    <div class="install-popup">
-      <button class="install-popup-close" id="install-popup-close">✕</button>
-      <div class="install-popup-icon">📲</div>
-      <h2 class="install-popup-title">Install AGRIMETS</h2>
-      <p class="install-popup-sub">Get the full app experience — no browser bar, works offline</p>
-
-      <div class="install-steps">
-        <div class="install-step">
-          <span class="install-step-num">1</span>
-          <span>Open this app in <strong>Chrome browser</strong></span>
-        </div>
-        <div class="install-step">
-          <span class="install-step-num">2</span>
-          <span>Tap the <strong>⋮ menu</strong> at top-right</span>
-        </div>
-        <div class="install-step">
-          <span class="install-step-num">3</span>
-          <span>Tap <strong>"Add to Home screen"</strong> and confirm</span>
-        </div>
-      </div>
-
-      <div class="install-divider">— or tap below to open in Chrome —</div>
-
-      <a class="install-open-btn" id="install-open-btn" href="" target="_blank">
-        🌐 Open in Chrome
-      </a>
-
-      <p class="install-note">📱 iPhone users: open in Safari → Share (□↑) → Add to Home Screen</p>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════
        TOAST NOTIFICATION
   ════════════════════════════════════════════════ -->
   <div class="toast" id="toast"></div>
@@ -531,63 +492,6 @@
       <button class="share-skip-btn" id="share-skip-btn">Continue studying</button>
     </div>
   </div>
-
-  <!-- ── Install Button Logic ── -->
-  <script>
-    (function () {
-      var _deferredPrompt = null;
-      var btn     = document.getElementById('install-btn');
-      var overlay = document.getElementById('install-popup-overlay');
-      var closeBtn= document.getElementById('install-popup-close');
-      var openBtn = document.getElementById('install-open-btn');
-
-      // Set "Open in Chrome" link to current page URL
-      if (openBtn) openBtn.href = location.href;
-
-      // Capture native install prompt (Chrome Android outside Telegram)
-      window.addEventListener('beforeinstallprompt', function (e) {
-        e.preventDefault();
-        _deferredPrompt = e;
-      });
-
-      // Hide if already running as installed PWA
-      if (window.matchMedia('(display-mode: standalone)').matches) {
-        if (btn) btn.style.display = 'none';
-      }
-
-      window.addEventListener('appinstalled', function () {
-        if (btn) btn.style.display = 'none';
-        _deferredPrompt = null;
-      });
-
-      if (btn) {
-        btn.addEventListener('click', function () {
-          if (_deferredPrompt) {
-            _deferredPrompt.prompt();
-            _deferredPrompt.userChoice.then(function (r) {
-              _deferredPrompt = null;
-              if (r.outcome === 'accepted') btn.style.display = 'none';
-            });
-            return;
-          }
-          if (overlay) overlay.classList.remove('hidden');
-        });
-      }
-
-      if (closeBtn) {
-        closeBtn.addEventListener('click', function () {
-          if (overlay) overlay.classList.add('hidden');
-        });
-      }
-
-      if (overlay) {
-        overlay.addEventListener('click', function (e) {
-          if (e.target === overlay) overlay.classList.add('hidden');
-        });
-      }
-    })();
-  </script>
-
   <script>
     (function() {
       var v = window._cbv || Date.now();
