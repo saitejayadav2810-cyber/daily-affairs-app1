@@ -1832,3 +1832,513 @@ body {
   background: var(--surface-2);
   color: var(--text-primary);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   FEATURE: STICKY SEARCH BARS (Saved + History tabs)
+═══════════════════════════════════════════════════════════════ */
+.tab-search-wrap {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  padding: 0 16px 10px;
+  background: linear-gradient(to bottom, var(--bg) 80%, transparent);
+  flex-shrink: 0;
+}
+
+.tab-search-inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  padding: 10px 14px;
+  transition: border-color 0.12s;
+}
+
+.tab-search-wrap:focus-within .tab-search-inner {
+  border-color: rgba(0,229,255,0.4);
+  box-shadow: 0 0 0 3px rgba(0,229,255,0.07);
+}
+
+.tab-search-icon {
+  font-size: 14px;
+  opacity: 0.5;
+  flex-shrink: 0;
+}
+
+.tab-search-input {
+  flex: 1;
+  background: none;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1;
+  caret-color: var(--cyan);
+}
+
+.tab-search-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.tab-search-clear {
+  background: rgba(255,255,255,0.08);
+  border: none;
+  border-radius: 50%;
+  width: 22px;
+  height: 22px;
+  color: var(--text-muted);
+  font-size: 11px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: background 0.08s, color 0.08s;
+}
+
+.tab-search-clear:active {
+  background: rgba(255,255,255,0.18);
+  color: var(--text-primary);
+}
+
+/* No-results message inside lists */
+.search-no-results {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.search-no-results strong {
+  display: block;
+  font-family: var(--font-display);
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FEATURE: QUIZ MY SAVED CARDS BUTTON
+═══════════════════════════════════════════════════════════════ */
+.quiz-saved-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: calc(100% - 32px);
+  margin: 0 16px 12px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, rgba(0,229,255,0.10) 0%, rgba(61,90,254,0.12) 100%);
+  border: 1px solid rgba(0,229,255,0.30);
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  transition: all 0.10s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.quiz-saved-btn:active {
+  transform: scale(0.97);
+  background: linear-gradient(135deg, rgba(0,229,255,0.18) 0%, rgba(61,90,254,0.22) 100%);
+  border-color: var(--cyan);
+  box-shadow: 0 0 20px rgba(0,229,255,0.15);
+}
+
+.quiz-saved-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.quiz-saved-icon {
+  font-size: 20px;
+}
+
+.quiz-saved-left > span:last-child {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--cyan);
+  letter-spacing: 0.2px;
+}
+
+.quiz-saved-arrow {
+  font-size: 18px;
+  color: var(--cyan);
+  opacity: 0.7;
+  font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FEATURE: 50-CARD SPRINT BUTTON (Subject Picker)
+═══════════════════════════════════════════════════════════════ */
+.sprint-cta-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: calc(100% - 32px);
+  margin: 4px 16px 16px;
+  padding: 16px 20px;
+  background: linear-gradient(135deg, rgba(255,171,0,0.14) 0%, rgba(255,109,0,0.12) 100%);
+  border: 1px solid rgba(255,171,0,0.40);
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.10s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sprint-cta-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 10% 50%, rgba(255,171,0,0.08), transparent 60%);
+  pointer-events: none;
+}
+
+.sprint-cta-btn:active {
+  transform: scale(0.97);
+  border-color: var(--amber);
+  box-shadow: 0 0 24px rgba(255,171,0,0.20);
+}
+
+.sprint-cta-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.sprint-cta-icon {
+  font-size: 28px;
+  filter: drop-shadow(0 0 8px rgba(255,171,0,0.6));
+  flex-shrink: 0;
+}
+
+.sprint-cta-text {
+  text-align: left;
+}
+
+.sprint-cta-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--amber);
+  letter-spacing: -0.2px;
+  line-height: 1.2;
+}
+
+.sprint-cta-sub {
+  font-size: 12px;
+  color: rgba(255,171,0,0.6);
+  font-weight: 500;
+  margin-top: 3px;
+}
+
+.sprint-cta-arrow {
+  font-size: 20px;
+  color: var(--amber);
+  opacity: 0.7;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FEATURE: SPRINT HUD (Timer bar inside card-area)
+═══════════════════════════════════════════════════════════════ */
+.sprint-hud {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin: 4px 16px 6px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, rgba(255,171,0,0.10) 0%, rgba(255,109,0,0.08) 100%);
+  border: 1px solid rgba(255,171,0,0.30);
+  border-radius: var(--r-md);
+  flex-shrink: 0;
+}
+
+.sprint-hud-timer {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--amber);
+  letter-spacing: 1px;
+  line-height: 1;
+  min-width: 58px;
+  text-align: center;
+}
+
+.sprint-hud-timer.urgent {
+  color: var(--red);
+  animation: pulse-urgent 0.6s ease-in-out infinite;
+}
+
+@keyframes pulse-urgent {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.5; }
+}
+
+.sprint-hud-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255,255,255,0.10);
+  margin: 0 14px;
+  flex-shrink: 0;
+}
+
+.sprint-hud-count {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  min-width: 50px;
+  text-align: center;
+}
+
+.sprint-hud-scores {
+  display: flex;
+  gap: 10px;
+  min-width: 80px;
+  justify-content: center;
+}
+
+.sprint-hud-known {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.sprint-hud-unknown {
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--red);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FEATURE: SPRINT ACTION BUTTONS (Know It / Don't Know)
+═══════════════════════════════════════════════════════════════ */
+.sprint-action-row {
+  display: flex;
+  gap: 12px;
+  padding: 8px 16px 4px;
+  flex-shrink: 0;
+}
+
+.sprint-action-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 14px 12px;
+  border: none;
+  border-radius: var(--r-lg);
+  cursor: pointer;
+  font-family: var(--font-display);
+  transition: transform 0.08s, box-shadow 0.08s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sprint-action-btn:active {
+  transform: scale(0.94);
+}
+
+.sprint-unknown-btn {
+  background: linear-gradient(135deg, rgba(255,82,82,0.18), rgba(255,82,82,0.10));
+  border: 1.5px solid rgba(255,82,82,0.40);
+  color: var(--red);
+}
+
+.sprint-unknown-btn:active {
+  background: rgba(255,82,82,0.28);
+  box-shadow: 0 0 20px rgba(255,82,82,0.25);
+}
+
+.sprint-known-btn {
+  background: linear-gradient(135deg, rgba(0,230,118,0.18), rgba(0,230,118,0.10));
+  border: 1.5px solid rgba(0,230,118,0.40);
+  color: var(--green);
+}
+
+.sprint-known-btn:active {
+  background: rgba(0,230,118,0.28);
+  box-shadow: 0 0 20px rgba(0,230,118,0.25);
+}
+
+.sprint-action-icon {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.sprint-action-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   FEATURE: SPRINT RESULT SCREEN
+═══════════════════════════════════════════════════════════════ */
+.sprint-result {
+  position: absolute;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  animation: fade-up 0.25s ease;
+  z-index: 10;
+}
+
+.sprint-result-inner {
+  text-align: center;
+  width: 100%;
+  max-width: 360px;
+}
+
+.sprint-result-icon {
+  font-size: 64px;
+  line-height: 1;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 20px rgba(255,171,0,0.6));
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+.sprint-result-title {
+  font-family: var(--font-display);
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  margin-bottom: 20px;
+}
+
+.sprint-result-pct {
+  font-family: var(--font-display);
+  font-size: 80px;
+  font-weight: 800;
+  line-height: 1;
+  background: linear-gradient(135deg, var(--amber), #FF6D00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 6px;
+}
+
+.sprint-result-pct-label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-muted);
+  font-weight: 700;
+  margin-bottom: 32px;
+}
+
+.sprint-result-stats {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 36px;
+  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  overflow: hidden;
+}
+
+.sprint-rs {
+  flex: 1;
+  padding: 20px 12px;
+  text-align: center;
+  position: relative;
+}
+
+.sprint-rs + .sprint-rs::before {
+  content: '';
+  position: absolute;
+  left: 0; top: 20%; bottom: 20%;
+  width: 1px;
+  background: var(--glass-border);
+}
+
+.sprint-rs-val {
+  font-family: var(--font-display);
+  font-size: 32px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1;
+}
+
+.sprint-rs-val.green { color: var(--green); }
+.sprint-rs-val.red   { color: var(--red); }
+
+.sprint-rs-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.sprint-result-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sprint-again-btn {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, rgba(255,171,0,0.20), rgba(255,109,0,0.16));
+  border: 1.5px solid rgba(255,171,0,0.50);
+  border-radius: var(--r-lg);
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--amber);
+  cursor: pointer;
+  transition: all 0.10s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sprint-again-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 0 24px rgba(255,171,0,0.25);
+}
+
+.sprint-home-btn {
+  width: 100%;
+  padding: 14px;
+  background: none;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.10s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sprint-home-btn:active {
+  color: var(--text-secondary);
+  border-color: rgba(255,255,255,0.15);
+}
+
+/* Make #view-home a relative container so sprint-result can overlay it */
+#view-home {
+  position: relative;
+}
