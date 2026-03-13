@@ -62,12 +62,14 @@ let State = {
   stackPos:        -1,      // Current position in sessionStack (-1 = tip)
 
   // ── Sprint Mode ──────────────────────────────────────────────
-  sprintMode:      false,   // True while 50-card sprint is active
-  sprintKnown:     0,       // Cards marked "know it"
-  sprintUnknown:   0,       // Cards marked "don't know"
-  sprintSecondsLeft: 600,   // 10 minutes countdown
-  sprintTimerInterval: null,// setInterval handle
-  sprintTarget:    50,      // How many cards to show (capped to available)
+  sprintMode:         false, // True while 50-card sprint is active
+  sprintKnown:        0,     // Cards marked "know it"
+  sprintUnknown:      0,     // Cards marked "don't know"
+  sprintKnownCards:   [],    // Actual question objects marked known
+  sprintUnknownCards: [],    // Actual question objects marked unknown
+  sprintSecondsLeft:  600,   // 10 minutes countdown
+  sprintTimerInterval: null, // setInterval handle
+  sprintTarget:       50,    // How many cards to show (capped to available)
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -1223,6 +1225,8 @@ function startSprint() {
   State.sprintMode         = true;
   State.sprintKnown        = 0;
   State.sprintUnknown      = 0;
+  State.sprintKnownCards   = [];
+  State.sprintUnknownCards = [];
   State.sprintSecondsLeft  = SPRINT_SECONDS;
   State.sprintTarget       = Math.min(SPRINT_CARDS, pool.length);
   State.currentIndex       = 0;
@@ -1296,11 +1300,15 @@ function _sprintHudUpdate() {
 function _sprintCardAction(knew) {
   if (!State.sprintMode) return;
 
+  const card = State.dailyCards[State.currentIndex];
+
   if (knew) {
     State.sprintKnown++;
+    State.sprintKnownCards.push(card);
     TG.Haptic.success();
   } else {
     State.sprintUnknown++;
+    State.sprintUnknownCards.push(card);
     TG.Haptic.light();
   }
 
@@ -1323,16 +1331,30 @@ function _endSprint() {
   clearInterval(State.sprintTimerInterval);
   State.sprintMode = false;
 
-  const total   = State.sprintKnown + State.sprintUnknown;
-  const pct     = total > 0
+  const total = State.sprintKnown + State.sprintUnknown;
+  const pct   = total > 0
     ? Math.round((State.sprintKnown / total) * 100)
     : 0;
 
-  // ── Populate result screen ────────────────────────────────
+  // ── Populate summary stats ─────────────────────────────────
   if (DOM.sprintResultPct)  DOM.sprintResultPct.textContent  = `${pct}%`;
   if (DOM.sprintRsKnown)    DOM.sprintRsKnown.textContent    = State.sprintKnown;
   if (DOM.sprintRsUnknown)  DOM.sprintRsUnknown.textContent  = State.sprintUnknown;
   if (DOM.sprintRsTotal)    DOM.sprintRsTotal.textContent    = total;
+
+  // ── Render Known card list ─────────────────────────────────
+  const knownList   = document.getElementById('sprint-known-list');
+  const unknownList = document.getElementById('sprint-unknown-list');
+  const knownHeader = document.getElementById('sprint-known-header');
+  const unknownHeader = document.getElementById('sprint-unknown-header');
+
+  if (knownHeader)
+    knownHeader.textContent = `✓ Known — ${State.sprintKnown} card${State.sprintKnown !== 1 ? 's' : ''}`;
+  if (unknownHeader)
+    unknownHeader.textContent = `✗ Don't Know — ${State.sprintUnknown} card${State.sprintUnknown !== 1 ? 's' : ''}`;
+
+  _renderSprintCardList(knownList,   State.sprintKnownCards,   'known');
+  _renderSprintCardList(unknownList, State.sprintUnknownCards, 'unknown');
 
   // ── Show result, hide card area ───────────────────────────
   DOM.cardArea?.classList.add('hidden');
@@ -1345,6 +1367,30 @@ function _endSprint() {
 
   SwipeEngine.destroy();
   TG.Haptic.success();
+}
+
+function _renderSprintCardList(containerEl, cards, type) {
+  if (!containerEl) return;
+  containerEl.innerHTML = '';
+
+  if (cards.length === 0) {
+    containerEl.innerHTML = `<div class="sprint-review-empty">
+      ${type === 'known' ? '🎉 None to review here!' : '✨ You knew them all!'}
+    </div>`;
+    return;
+  }
+
+  cards.forEach((q, i) => {
+    const item = document.createElement('div');
+    item.className = `sprint-review-card sprint-review-${type}`;
+    item.style.setProperty('--i', i);
+    item.innerHTML = `
+      <div class="sprint-review-category">${_escHtml(q.category || 'General')}</div>
+      <div class="sprint-review-question">${_escHtml(q.question)}</div>
+      <div class="sprint-review-answer">${_escHtml(q.answer)}</div>
+    `;
+    containerEl.appendChild(item);
+  });
 }
 
 function _exitSprint() {
