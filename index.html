@@ -6,6 +6,19 @@
   <meta name="theme-color" content="#0a0a12" />
   <title>AGRIMETS</title>
 
+  <!-- ── PWA: Web App Manifest (enables "Add to Home Screen" install prompt) ── -->
+  <link rel="manifest" href="manifest.json" />
+
+  <!-- ── PWA: Apple / iOS home-screen meta tags ── -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="AGRIMETS" />
+  <link rel="apple-touch-icon" href="icon-192.png" />
+
+  <!-- ── PWA: Microsoft / Android extras ── -->
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="application-name" content="AGRIMETS" />
+
   <!-- ── Service Worker: forces network-first on every load ── -->
   <script>
     if ('serviceWorker' in navigator) {
@@ -384,6 +397,33 @@
           </div>
         </div>
         <div class="user-count-number" id="user-count-val">—</div>
+      </div>
+
+      <!-- ── DAILY GOAL SETTER ── -->
+      <div class="goal-section" id="goal-section">
+        <h3 class="section-title">Daily Goal</h3>
+        <div class="goal-body">
+          <div class="goal-ring-wrap">
+            <svg class="goal-ring" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle class="goal-ring-bg"   cx="60" cy="60" r="50"/>
+              <circle class="goal-ring-fill" id="goal-ring-fill" cx="60" cy="60" r="50"/>
+            </svg>
+            <div class="goal-ring-center">
+              <div class="goal-ring-count" id="goal-today-count">0</div>
+              <div class="goal-ring-of">of <span id="goal-target-label">20</span></div>
+            </div>
+          </div>
+          <div class="goal-right">
+            <p class="goal-caption" id="goal-caption">Tap to set today's goal</p>
+            <div class="goal-picker" id="goal-picker">
+              <button class="goal-opt" data-goal="10">10</button>
+              <button class="goal-opt" data-goal="20">20</button>
+              <button class="goal-opt" data-goal="30">30</button>
+              <button class="goal-opt" data-goal="50">50</button>
+              <button class="goal-opt" data-goal="100">100</button>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Stats grid -->
