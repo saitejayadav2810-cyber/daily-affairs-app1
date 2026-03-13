@@ -45,6 +45,8 @@ const LS = {
   STATS:         'dca_stats',           // { streak, lastActive, totalSeen, daysActive }
   GUIDE_SHOWN:   'dca_guide_shown',     // Whether swipe guide has been dismissed
   HISTORY:       'dca_history',         // [{id, question, answer, category, action, ts}]
+  DAILY_GOAL:    'dca_daily_goal',      // Number — daily card target (default 20)
+  TODAY_PROG:    'dca_today_progress',  // { date: 'YYYY-MM-DD', count: N }
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -537,6 +539,8 @@ function markSeen(questionId) {
     try { _checkShareMilestone(seen.length); } catch(e) {}
   }
   _updateStats();
+  // Track daily goal progress (every card action counts)
+  try { _trackTodayProgress(); } catch(e) {}
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1476,6 +1480,9 @@ function renderProgressTab() {
   // Refresh user count display
   _initUserCount();
 
+  // Daily goal ring
+  _renderGoalSection();
+
   // Weekly heatmap
   _renderHeatmap();
 
@@ -1971,6 +1978,157 @@ function _shareApp() {
   }
 }
 
+// ════════════════════════════════════════════════════════════════
+//  CONFETTI ENGINE  — pure-canvas burst, no dependencies
+// ════════════════════════════════════════════════════════════════
+
+const Confetti = (() => {
+  const COLORS = [
+    '#00E5FF','#00E676','#FFAB00','#FF5252',
+    '#7C4DFF','#FF6D00','#FF4081','#FFD740',
+    '#69F0AE','#40C4FF',
+  ];
+
+  function burst() {
+    const canvas  = document.createElement('canvas');
+    canvas.style.cssText =
+      'position:fixed;inset:0;width:100%;height:100%;' +
+      'pointer-events:none;z-index:9999;';
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    document.body.appendChild(canvas);
+
+    const ctx    = canvas.getContext('2d');
+    const cx     = canvas.width / 2;
+    const cy     = canvas.height * 0.35;
+
+    const pieces = Array.from({ length: 160 }, () => ({
+      x:    cx + (Math.random() - 0.5) * 80,
+      y:    cy,
+      vx:   (Math.random() - 0.5) * 16,
+      vy:   (Math.random() - 1.6) * 14,
+      w:    5 + Math.random() * 9,
+      h:    4 + Math.random() * 6,
+      color: COLORS[Math.floor(Math.random() * COLORS.length)],
+      rot:  Math.random() * Math.PI * 2,
+      rVel: (Math.random() - 0.5) * 0.25,
+      life: 1.0 + Math.random() * 0.4,
+    }));
+
+    let rafId;
+
+    function tick() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      let anyAlive = false;
+
+      pieces.forEach(p => {
+        p.vy  += 0.38;            // gravity
+        p.vx  *= 0.995;           // light air resistance
+        p.x   += p.vx;
+        p.y   += p.vy;
+        p.rot += p.rVel;
+        p.life -= 0.012;
+
+        if (p.life <= 0 || p.y > canvas.height + 30) return;
+        anyAlive = true;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+        ctx.restore();
+      });
+
+      if (anyAlive) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        canvas.remove();
+      }
+    }
+
+    rafId = requestAnimationFrame(tick);
+    // Hard safety cap — remove canvas after 7 s regardless
+    setTimeout(() => { cancelAnimationFrame(rafId); canvas.remove(); }, 7000);
+  }
+
+  return { burst };
+})();
+
+// ════════════════════════════════════════════════════════════════
+//  DAILY GOAL — tracking + rendering
+// ════════════════════════════════════════════════════════════════
+
+/** Increment today's progress counter; fire confetti if goal is reached */
+function _trackTodayProgress() {
+  const todayStr = today();
+  let tp = ls_get(LS.TODAY_PROG, { date: '', count: 0 });
+  if (tp.date !== todayStr) tp = { date: todayStr, count: 0 };
+  tp.count++;
+  ls_set(LS.TODAY_PROG, tp);
+
+  const goal = ls_get(LS.DAILY_GOAL, 20);
+  // Fire only exactly on hitting the goal (not on every subsequent card)
+  if (tp.count === goal) {
+    TG.Haptic.success();
+    showToast('🎊 Daily goal reached! Incredible work!', 3500);
+    setTimeout(() => Confetti.burst(), 250);
+  }
+}
+
+/** Render the goal ring + caption + picker in the Progress tab */
+function _renderGoalSection() {
+  const todayStr = today();
+  let   tp       = ls_get(LS.TODAY_PROG, { date: '', count: 0 });
+  if (tp.date !== todayStr) tp = { date: todayStr, count: 0 };
+
+  const goal     = ls_get(LS.DAILY_GOAL, 20);
+  const count    = tp.count;
+  const pct      = Math.min(count / Math.max(goal, 1), 1);
+
+  // SVG ring: r=50, so circumference = 2πr ≈ 314.16
+  const CIRC = 2 * Math.PI * 50;
+
+  const countEl   = document.getElementById('goal-today-count');
+  const targetEl  = document.getElementById('goal-target-label');
+  const captionEl = document.getElementById('goal-caption');
+  const ringFill  = document.getElementById('goal-ring-fill');
+
+  if (countEl)  countEl.textContent  = count;
+  if (targetEl) targetEl.textContent = goal;
+
+  if (captionEl) {
+    captionEl.textContent = count >= goal
+      ? '🎊 Goal complete! Come back tomorrow.'
+      : `${goal - count} card${goal - count !== 1 ? 's' : ''} to go today`;
+  }
+
+  if (ringFill) {
+    ringFill.style.strokeDasharray  = `${CIRC}`;
+    ringFill.style.strokeDashoffset = `${CIRC * (1 - pct)}`;
+    ringFill.classList.toggle('goal-complete', count >= goal);
+  }
+
+  // Mark the active goal button
+  document.querySelectorAll('.goal-opt').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.goal) === goal);
+  });
+}
+
+/** Wire up goal picker buttons — call once after DOM is ready */
+function _initGoalPicker() {
+  document.querySelectorAll('.goal-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const newGoal = parseInt(btn.dataset.goal);
+      ls_set(LS.DAILY_GOAL, newGoal);
+      TG.Haptic.select();
+      _renderGoalSection();
+      showToast(`🎯 Daily goal set to ${newGoal} cards`);
+    });
+  });
+}
+
 async function boot() {
   // 1. Cache DOM
   _cacheDom();
@@ -1999,6 +2157,7 @@ async function boot() {
   // 6. Init tabs and buttons
   _initTabs();
   _initButtons();
+  _initGoalPicker();
 
   // 7. Dismiss splash
   await _delay(300);
