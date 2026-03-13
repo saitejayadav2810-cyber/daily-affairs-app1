@@ -126,11 +126,20 @@
 
       <!-- ── SPRINT RESULT SCREEN ── -->
       <div class="sprint-result hidden" id="sprint-result">
-        <div class="sprint-result-inner">
-          <div class="sprint-result-icon">⚡</div>
-          <h2 class="sprint-result-title">Sprint Complete!</h2>
-          <div class="sprint-result-pct" id="sprint-result-pct">0%</div>
-          <div class="sprint-result-pct-label">Accuracy</div>
+
+        <!-- Sticky header: accuracy + stats + actions -->
+        <div class="sprint-result-header">
+          <div class="sprint-result-hero">
+            <span class="sprint-result-icon">⚡</span>
+            <div>
+              <div class="sprint-result-title">Sprint Complete!</div>
+              <div class="sprint-result-pct-row">
+                <span class="sprint-result-pct" id="sprint-result-pct">0%</span>
+                <span class="sprint-result-pct-label">Accuracy</span>
+              </div>
+            </div>
+          </div>
+
           <div class="sprint-result-stats">
             <div class="sprint-rs">
               <div class="sprint-rs-val green" id="sprint-rs-known">0</div>
@@ -145,10 +154,28 @@
               <div class="sprint-rs-label">Total</div>
             </div>
           </div>
+
           <div class="sprint-result-actions">
             <button class="sprint-again-btn" id="btn-sprint-again">⚡ Sprint Again</button>
             <button class="sprint-home-btn" id="btn-sprint-home">← Back to Subjects</button>
           </div>
+        </div>
+
+        <!-- Scrollable review body -->
+        <div class="sprint-review-body">
+
+          <!-- Unknown section (shown first — most important to study) -->
+          <div class="sprint-review-section sprint-review-section-unknown">
+            <div class="sprint-review-section-title" id="sprint-unknown-header">✗ Don't Know — 0 cards</div>
+            <div class="sprint-review-list" id="sprint-unknown-list"></div>
+          </div>
+
+          <!-- Known section -->
+          <div class="sprint-review-section sprint-review-section-known">
+            <div class="sprint-review-section-title" id="sprint-known-header">✓ Known — 0 cards</div>
+            <div class="sprint-review-list" id="sprint-known-list"></div>
+          </div>
+
         </div>
       </div>
 
