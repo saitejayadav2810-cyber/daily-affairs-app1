@@ -60,6 +60,14 @@ let State = {
   activeSubject:   null,    // null = show subject picker
   sessionStack:    [],      // Cards seen this session in order [{card, index}]
   stackPos:        -1,      // Current position in sessionStack (-1 = tip)
+
+  // ── Sprint Mode ──────────────────────────────────────────────
+  sprintMode:      false,   // True while 50-card sprint is active
+  sprintKnown:     0,       // Cards marked "know it"
+  sprintUnknown:   0,       // Cards marked "don't know"
+  sprintSecondsLeft: 600,   // 10 minutes countdown
+  sprintTimerInterval: null,// setInterval handle
+  sprintTarget:    50,      // How many cards to show (capped to available)
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -133,13 +141,44 @@ function _cacheDom() {
     viewSaved:         document.getElementById('view-saved'),
     viewProgress:      document.getElementById('view-progress'),
     viewHistory:       document.getElementById('view-history'),
+    // Saved tab
     savedBadge:        document.getElementById('saved-badge'),
     savedCountLabel:   document.getElementById('saved-count-label'),
     savedList:         document.getElementById('saved-list'),
     savedEmpty:        document.getElementById('saved-empty'),
+    savedSearch:       document.getElementById('saved-search'),
+    savedSearchClear:  document.getElementById('saved-search-clear'),
+    btnQuizSaved:      document.getElementById('btn-quiz-saved'),
+
+    // History tab
     historyList:       document.getElementById('history-list'),
     historyEmpty:      document.getElementById('history-empty'),
     historyCountLabel: document.getElementById('history-count-label'),
+    historySearch:     document.getElementById('history-search'),
+    historySearchClear:document.getElementById('history-search-clear'),
+
+    // Action rows
+    actionRow:         document.getElementById('action-row'),
+    sprintActionRow:   document.getElementById('sprint-action-row'),
+    btnSprintKnown:    document.getElementById('btn-sprint-known'),
+    btnSprintUnknown:  document.getElementById('btn-sprint-unknown'),
+
+    // Sprint HUD
+    sprintHud:         document.getElementById('sprint-hud'),
+    sprintHudTimer:    document.getElementById('sprint-hud-timer'),
+    sprintHudCount:    document.getElementById('sprint-hud-count'),
+    sprintHudKnown:    document.getElementById('sprint-hud-known'),
+    sprintHudUnknown:  document.getElementById('sprint-hud-unknown'),
+
+    // Sprint result screen
+    sprintResult:      document.getElementById('sprint-result'),
+    sprintResultPct:   document.getElementById('sprint-result-pct'),
+    sprintRsKnown:     document.getElementById('sprint-rs-known'),
+    sprintRsUnknown:   document.getElementById('sprint-rs-unknown'),
+    sprintRsTotal:     document.getElementById('sprint-rs-total'),
+    btnSprintAgain:    document.getElementById('btn-sprint-again'),
+    btnSprintHome:     document.getElementById('btn-sprint-home'),
+    btnSprintCta:      document.getElementById('btn-sprint'),
 
     // Progress
     todayDateLabel:    document.getElementById('today-date-label'),
@@ -631,12 +670,29 @@ function _renderCard(question, skipStack) {
     // Re-init swipe engine after entrance begins
     SwipeEngine.destroy();
     setTimeout(() => {
-      SwipeEngine.init(card, {
+      // In sprint mode, swap overlay text and callbacks
+      const overlayRightEl = DOM.overlayRight;
+      const overlayLeftEl  = DOM.overlayLeft;
+
+      if (State.sprintMode) {
+        if (overlayRightEl) overlayRightEl.innerHTML = '<span>✓ Know It</span>';
+        if (overlayLeftEl)  overlayLeftEl.innerHTML  = '<span>✗ Don\'t Know</span>';
+      } else {
+        if (overlayRightEl) overlayRightEl.innerHTML = '<span>⏭ Skip</span>';
+        if (overlayLeftEl)  overlayLeftEl.innerHTML  = '<span>⏭ Skip</span>';
+      }
+
+      SwipeEngine.init(DOM.activeCard, {
         right: DOM.overlayRight,
         left:  DOM.overlayLeft,
         up:    DOM.overlayUp,
         down:  DOM.overlayDown,
-      }, {
+      }, State.sprintMode ? {
+        // Sprint swipe callbacks — tap does nothing (no reveal)
+        onSwipeRight: () => _sprintCardAction(true),
+        onSwipeLeft:  () => _sprintCardAction(false),
+        onTap:        () => {},   // intentionally disabled
+      } : {
         onSwipeDown:  () => _flipCard(),
         onSwipeUp:    () => _handleSave(question),
         onSwipeRight: () => _handleSkip(question),
@@ -678,6 +734,9 @@ function _goCardFwd() {
 }
 
 function _flipCard() {
+  // Block flipping during sprint — answers are hidden intentionally
+  if (State.sprintMode) return;
+
   State.isFlipped = !State.isFlipped;
   DOM.cardInner?.classList.toggle('flipped', State.isFlipped);
   TG.Haptic.light();
@@ -911,15 +970,92 @@ function showSubjectPicker() {
 // ════════════════════════════════════════════════════════════════
 
 let _historyFilter = 'all';
+let _historySearchQuery = '';
+let _savedSearchQuery   = '';
+
+function renderSavedTab() {
+  const raw   = ls_get(LS.SAVED, []);
+  const query = _savedSearchQuery.trim().toLowerCase();
+
+  const saved = query
+    ? raw.filter(q =>
+        q.question.toLowerCase().includes(query) ||
+        q.answer.toLowerCase().includes(query)   ||
+        (q.category || '').toLowerCase().includes(query)
+      )
+    : raw;
+
+  if (DOM.savedCountLabel)
+    DOM.savedCountLabel.textContent = query
+      ? `${saved.length} of ${raw.length} card${raw.length !== 1 ? 's' : ''}`
+      : `${raw.length} card${raw.length !== 1 ? 's' : ''}`;
+
+  if (!DOM.savedList) return;
+  DOM.savedList.innerHTML = '';
+
+  // Hide quiz button when empty
+  if (DOM.btnQuizSaved)
+    DOM.btnQuizSaved.classList.toggle('hidden', raw.length === 0);
+
+  if (raw.length === 0) {
+    DOM.savedEmpty?.classList.remove('hidden');
+    DOM.savedList.classList.add('hidden');
+    return;
+  }
+
+  DOM.savedEmpty?.classList.add('hidden');
+  DOM.savedList.classList.remove('hidden');
+
+  if (saved.length === 0 && query) {
+    DOM.savedList.innerHTML = `<div class="search-no-results">
+      <strong>No matches found</strong>
+      Try a different search term
+    </div>`;
+    return;
+  }
+
+  saved.forEach((q, i) => {
+    const item = document.createElement('div');
+    item.className = 'saved-item';
+    item.style.setProperty('--i', i);
+    item.innerHTML = `
+      <div class="saved-item-category">${_escHtml(q.category)}</div>
+      <div class="saved-item-question">${_escHtml(q.question)}</div>
+      <div class="saved-item-answer">${_escHtml(q.answer)}</div>
+      <button class="saved-remove-btn" data-id="${q.id}" aria-label="Remove">✕</button>
+    `;
+    item.querySelector('.saved-remove-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      unsaveCard(q.id);
+      TG.Haptic.light();
+    });
+    DOM.savedList.appendChild(item);
+  });
+
+  _updateSavedBadge(raw.length);
+}
 
 function renderHistoryTab() {
   const history = ls_get(LS.HISTORY, []);
-  const filtered = _historyFilter === 'all'
+  const query   = _historySearchQuery.trim().toLowerCase();
+
+  // First apply action filter, then search filter
+  let filtered = _historyFilter === 'all'
     ? history
     : history.filter(h => h.action === _historyFilter);
 
+  if (query) {
+    filtered = filtered.filter(h =>
+      h.question.toLowerCase().includes(query) ||
+      h.answer.toLowerCase().includes(query)   ||
+      (h.category || '').toLowerCase().includes(query)
+    );
+  }
+
   if (DOM.historyCountLabel)
-    DOM.historyCountLabel.textContent = `${filtered.length} card${filtered.length !== 1 ? 's' : ''}`;
+    DOM.historyCountLabel.textContent = query
+      ? `${filtered.length} of ${history.length} card${history.length !== 1 ? 's' : ''}`
+      : `${history.length} card${history.length !== 1 ? 's' : ''}`;
 
   document.querySelectorAll('.hist-filter-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.filter === _historyFilter);
@@ -928,14 +1064,19 @@ function renderHistoryTab() {
   if (!DOM.historyList) return;
   DOM.historyList.innerHTML = '';
 
-  if (filtered.length === 0) {
-    DOM.historyEmpty?.classList.remove('hidden');
-    DOM.historyList.classList.add('hidden');
+  const isEmpty = filtered.length === 0 && !query;
+  DOM.historyEmpty?.classList.toggle('hidden', !isEmpty);
+  DOM.historyList.classList.toggle('hidden', isEmpty);
+
+  if (filtered.length === 0 && query) {
+    DOM.historyList.innerHTML = `<div class="search-no-results">
+      <strong>No matches found</strong>
+      Try a different search term
+    </div>`;
     return;
   }
 
-  DOM.historyEmpty?.classList.add('hidden');
-  DOM.historyList.classList.remove('hidden');
+  if (filtered.length === 0) return;
 
   filtered.forEach((h, i) => {
     const actionMeta = {
@@ -1006,49 +1147,262 @@ function _initTabs() {
   });
 
   _initHistoryFilters();
+  _initSearchBars();
+}
+
+// ── Search bar wiring ────────────────────────────────────────
+function _initSearchBars() {
+  // ── Saved search ──────────────────────────────────────────
+  const savedInput = DOM.savedSearch;
+  const savedClear = DOM.savedSearchClear;
+  if (savedInput) {
+    savedInput.addEventListener('input', () => {
+      _savedSearchQuery = savedInput.value;
+      savedClear?.classList.toggle('hidden', !savedInput.value);
+      renderSavedTab();
+    });
+    savedInput.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { savedInput.value = ''; savedInput.dispatchEvent(new Event('input')); }
+    });
+  }
+  if (savedClear) {
+    savedClear.addEventListener('click', () => {
+      savedInput.value = '';
+      _savedSearchQuery = '';
+      savedClear.classList.add('hidden');
+      savedInput.focus();
+      renderSavedTab();
+      TG.Haptic.light();
+    });
+  }
+
+  // ── History search ────────────────────────────────────────
+  const histInput = DOM.historySearch;
+  const histClear = DOM.historySearchClear;
+  if (histInput) {
+    histInput.addEventListener('input', () => {
+      _historySearchQuery = histInput.value;
+      histClear?.classList.toggle('hidden', !histInput.value);
+      renderHistoryTab();
+    });
+    histInput.addEventListener('keydown', e => {
+      if (e.key === 'Escape') { histInput.value = ''; histInput.dispatchEvent(new Event('input')); }
+    });
+  }
+  if (histClear) {
+    histClear.addEventListener('click', () => {
+      histInput.value = '';
+      _historySearchQuery = '';
+      histClear.classList.add('hidden');
+      histInput.focus();
+      renderHistoryTab();
+      TG.Haptic.light();
+    });
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
-//  SAVED TAB RENDERING
+//  FEATURE: 50-CARD SPRINT MODE
 // ════════════════════════════════════════════════════════════════
 
-function renderSavedTab() {
-  const saved = ls_get(LS.SAVED, []);
+const SPRINT_CARDS    = 50;
+const SPRINT_SECONDS  = 600; // 10 minutes
 
-  if (DOM.savedCountLabel)
-    DOM.savedCountLabel.textContent = `${saved.length} card${saved.length !== 1 ? 's' : ''}`;
+// ── 50-CARD SPRINT ──────────────────────────────────────────
 
-  if (!DOM.savedList) return;
-  DOM.savedList.innerHTML = '';
-
-  if (saved.length === 0) {
-    DOM.savedEmpty?.classList.remove('hidden');
-    DOM.savedList.classList.add('hidden');
+function startSprint() {
+  const pool = shuffle([...State.allQuestions]);
+  if (pool.length === 0) {
+    showToast('No cards available!');
     return;
   }
 
-  DOM.savedEmpty?.classList.add('hidden');
-  DOM.savedList.classList.remove('hidden');
+  TG.Haptic.heavy();
 
-  saved.forEach((q, i) => {
-    const item = document.createElement('div');
-    item.className = 'saved-item';
-    item.style.setProperty('--i', i);
-    item.innerHTML = `
-      <div class="saved-item-category">${_escHtml(q.category)}</div>
-      <div class="saved-item-question">${_escHtml(q.question)}</div>
-      <div class="saved-item-answer">${_escHtml(q.answer)}</div>
-      <button class="saved-remove-btn" data-id="${q.id}" aria-label="Remove">✕</button>
-    `;
-    item.querySelector('.saved-remove-btn').addEventListener('click', (e) => {
-      e.stopPropagation();
-      unsaveCard(q.id);
-      TG.Haptic.light();
-    });
-    DOM.savedList.appendChild(item);
-  });
+  // ── Initialise sprint state ──────────────────────────────
+  State.sprintMode         = true;
+  State.sprintKnown        = 0;
+  State.sprintUnknown      = 0;
+  State.sprintSecondsLeft  = SPRINT_SECONDS;
+  State.sprintTarget       = Math.min(SPRINT_CARDS, pool.length);
+  State.currentIndex       = 0;
+  State.sessionStack       = [];
+  State.stackPos           = -1;
+  State.dailyCards         = pool.slice(0, State.sprintTarget);
 
-  _updateSavedBadge(saved.length);
+  // ── Switch UI to card area ────────────────────────────────
+  if (DOM.activeSubjectName)
+    DOM.activeSubjectName.textContent = '⚡ 50-Card Sprint';
+
+  DOM.subjectPicker?.classList.add('hidden');
+  DOM.sprintResult?.classList.add('hidden');
+  DOM.cardArea?.classList.remove('hidden');
+
+  // ── Swap action rows ──────────────────────────────────────
+  DOM.actionRow?.classList.add('hidden');
+  DOM.sprintActionRow?.classList.remove('hidden');
+
+  // ── Show HUD, hide normal progress ───────────────────────
+  DOM.sprintHud?.classList.remove('hidden');
+
+  // ── Start countdown timer ─────────────────────────────────
+  _sprintHudUpdate();
+  clearInterval(State.sprintTimerInterval);
+  State.sprintTimerInterval = setInterval(_sprintTick, 1000);
+
+  // ── Render first card ─────────────────────────────────────
+  _renderCard(State.dailyCards[0]);
+  showToast('⚡ Sprint started! Right = Know It, Left = Don\'t Know', 3000);
+}
+
+function _sprintTick() {
+  State.sprintSecondsLeft--;
+  _sprintHudUpdate();
+
+  if (State.sprintSecondsLeft <= 0) {
+    clearInterval(State.sprintTimerInterval);
+    showToast("⏱ Time's up!", 2000);
+    TG.Haptic.warning();
+    setTimeout(_endSprint, 600);
+  } else if (State.sprintSecondsLeft === 60) {
+    showToast('⚡ 1 minute left!', 2000);
+    TG.Haptic.medium();
+  } else if (State.sprintSecondsLeft === 30) {
+    TG.Haptic.heavy();
+  }
+}
+
+function _sprintHudUpdate() {
+  const s   = State.sprintSecondsLeft;
+  const min = Math.floor(s / 60).toString().padStart(2, '0');
+  const sec = (s % 60).toString().padStart(2, '0');
+  const timeStr = `${min}:${sec}`;
+
+  if (DOM.sprintHudTimer) {
+    DOM.sprintHudTimer.textContent = timeStr;
+    DOM.sprintHudTimer.classList.toggle('urgent', s <= 30);
+  }
+
+  const done = State.sprintKnown + State.sprintUnknown;
+  if (DOM.sprintHudCount)
+    DOM.sprintHudCount.textContent = `${done} / ${State.sprintTarget}`;
+  if (DOM.sprintHudKnown)
+    DOM.sprintHudKnown.textContent = `${State.sprintKnown} ✓`;
+  if (DOM.sprintHudUnknown)
+    DOM.sprintHudUnknown.textContent = `${State.sprintUnknown} ✗`;
+}
+
+// Called by swipe engine callbacks — score is already committed, just update + advance
+function _sprintCardAction(knew) {
+  if (!State.sprintMode) return;
+
+  if (knew) {
+    State.sprintKnown++;
+    TG.Haptic.success();
+  } else {
+    State.sprintUnknown++;
+    TG.Haptic.light();
+  }
+
+  _sprintHudUpdate();
+
+  const done = State.sprintKnown + State.sprintUnknown;
+  if (done >= State.sprintTarget) {
+    clearInterval(State.sprintTimerInterval);
+    setTimeout(_endSprint, 300);
+  } else {
+    setTimeout(() => {
+      State.currentIndex++;
+      _updateDailyProgress();
+      _renderCard(State.dailyCards[State.currentIndex]);
+    }, 110);
+  }
+}
+
+function _endSprint() {
+  clearInterval(State.sprintTimerInterval);
+  State.sprintMode = false;
+
+  const total   = State.sprintKnown + State.sprintUnknown;
+  const pct     = total > 0
+    ? Math.round((State.sprintKnown / total) * 100)
+    : 0;
+
+  // ── Populate result screen ────────────────────────────────
+  if (DOM.sprintResultPct)  DOM.sprintResultPct.textContent  = `${pct}%`;
+  if (DOM.sprintRsKnown)    DOM.sprintRsKnown.textContent    = State.sprintKnown;
+  if (DOM.sprintRsUnknown)  DOM.sprintRsUnknown.textContent  = State.sprintUnknown;
+  if (DOM.sprintRsTotal)    DOM.sprintRsTotal.textContent    = total;
+
+  // ── Show result, hide card area ───────────────────────────
+  DOM.cardArea?.classList.add('hidden');
+  DOM.sprintResult?.classList.remove('hidden');
+
+  // ── Restore UI to normal state ────────────────────────────
+  DOM.sprintHud?.classList.add('hidden');
+  DOM.actionRow?.classList.remove('hidden');
+  DOM.sprintActionRow?.classList.add('hidden');
+
+  SwipeEngine.destroy();
+  TG.Haptic.success();
+}
+
+function _exitSprint() {
+  clearInterval(State.sprintTimerInterval);
+  State.sprintMode = false;
+
+  // Hide result screen + card area
+  DOM.sprintResult?.classList.add('hidden');
+  DOM.cardArea?.classList.add('hidden');
+
+  // Restore normal UI bits
+  DOM.sprintHud?.classList.add('hidden');
+  DOM.actionRow?.classList.remove('hidden');
+  DOM.sprintActionRow?.classList.add('hidden');
+
+  SwipeEngine.destroy();
+  showSubjectPicker();
+}
+
+function startSavedQuiz() {
+  const saved = ls_get(LS.SAVED, []);
+  if (saved.length === 0) {
+    showToast('No saved cards to quiz!');
+    return;
+  }
+
+  TG.Haptic.medium();
+
+  // Reset search so user sees the full deck they're quizzing
+  _savedSearchQuery = '';
+  if (DOM.savedSearch)       DOM.savedSearch.value = '';
+  if (DOM.savedSearchClear)  DOM.savedSearchClear.classList.add('hidden');
+
+  // Switch to the Home/Cards tab
+  DOM.tabHome?.click();
+
+  // Brief delay so the tab transition completes, then launch the subject
+  setTimeout(() => {
+    State.activeSubject  = '__SAVED_QUIZ__';
+    State.currentIndex   = 0;
+    State.sessionSaved   = 0;
+    State.sessionSkipped = 0;
+    State.sessionStack   = [];
+    State.stackPos       = -1;
+
+    const pool = shuffle([...saved]);
+    State.dailyCards = pool;
+
+    if (DOM.activeSubjectName)
+      DOM.activeSubjectName.textContent = '🔖 Saved Quiz';
+
+    DOM.subjectPicker?.classList.add('hidden');
+    DOM.cardArea?.classList.remove('hidden');
+
+    _updateDailyProgress();
+    _renderCard(State.dailyCards[0]);
+    showToast(`🎯 Quizzing ${pool.length} saved card${pool.length !== 1 ? 's' : ''}!`, 2200);
+  }, 120);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1237,7 +1591,12 @@ function _initButtons() {
   DOM.tabUpdate?.addEventListener('click', () => manualRefresh());
   // ── Back to subject picker ──────────────────────────────────
   DOM.btnBackSubjects?.addEventListener('click', () => {
-    showSubjectPicker();
+    if (State.sprintMode) {
+      // Cancel sprint mid-way — confirm first
+      TG.confirm('Cancel this sprint?', () => _exitSprint());
+    } else {
+      showSubjectPicker();
+    }
   });
 
   // ── Arena back / forward arrows ────────────────────────────
@@ -1245,6 +1604,7 @@ function _initButtons() {
   DOM.btnCardFwd?.addEventListener('click',  () => _goCardFwd());
 
   DOM.btnSkip?.addEventListener('click', () => {
+    if (State.sprintMode) return;
     const q = State.dailyCards[State.currentIndex];
     if (!q) return;
     TG.Haptic.light();
@@ -1252,10 +1612,12 @@ function _initButtons() {
   });
 
   DOM.btnFlip?.addEventListener('click', () => {
+    if (State.sprintMode) return;
     _flipCard();
   });
 
   DOM.btnSave?.addEventListener('click', () => {
+    if (State.sprintMode) return;
     const q = State.dailyCards[State.currentIndex];
     if (!q) return;
     TG.Haptic.medium();
@@ -1263,11 +1625,45 @@ function _initButtons() {
   });
 
   DOM.btnNext?.addEventListener('click', () => {
+    if (State.sprintMode) return;
     const q = State.dailyCards[State.currentIndex];
     if (!q) return;
     TG.Haptic.success();
     SwipeEngine.triggerSwipe('right');
   });
+
+  // ── Sprint: button-row Know It / Don't Know ────────────────
+  // triggerSwipe fires the onSwipeRight/Left callback → _sprintCardAction
+  // which handles score increment + advance. No double counting.
+  DOM.btnSprintKnown?.addEventListener('click', () => {
+    if (!State.sprintMode) return;
+    TG.Haptic.success();
+    SwipeEngine.triggerSwipe('right');
+  });
+
+  DOM.btnSprintUnknown?.addEventListener('click', () => {
+    if (!State.sprintMode) return;
+    TG.Haptic.light();
+    SwipeEngine.triggerSwipe('left');
+  });
+
+  // ── Sprint: CTA button on subject picker ──────────────────
+  DOM.btnSprintCta?.addEventListener('click', () => startSprint());
+
+  // ── Sprint: result screen actions ─────────────────────────
+  DOM.btnSprintAgain?.addEventListener('click', () => {
+    TG.Haptic.medium();
+    DOM.sprintResult?.classList.add('hidden');
+    startSprint();
+  });
+
+  DOM.btnSprintHome?.addEventListener('click', () => {
+    TG.Haptic.select();
+    _exitSprint();
+  });
+
+  // ── Quiz My Saved Cards ────────────────────────────────────
+  DOM.btnQuizSaved?.addEventListener('click', () => startSavedQuiz());
 
   // Completion → review saved
   DOM.btnReviewSaved?.addEventListener('click', () => {
