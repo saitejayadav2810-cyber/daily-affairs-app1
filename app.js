@@ -45,8 +45,6 @@ const LS = {
   STATS:         'dca_stats',           // { streak, lastActive, totalSeen, daysActive }
   GUIDE_SHOWN:   'dca_guide_shown',     // Whether swipe guide has been dismissed
   HISTORY:       'dca_history',         // [{id, question, answer, category, action, ts}]
-  DAILY_GOAL:    'dca_daily_goal',      // Number — daily card target (default 20)
-  TODAY_PROG:    'dca_today_progress',  // { date: 'YYYY-MM-DD', count: N }
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -62,6 +60,7 @@ let State = {
   activeSubject:   null,    // null = show subject picker
   sessionStack:    [],      // Cards seen this session in order [{card, index}]
   stackPos:        -1,      // Current position in sessionStack (-1 = tip)
+  cramMode:        false,   // true = Cram Mode (scrollable list), false = Swipe Mode
 
   // ── Sprint Mode ──────────────────────────────────────────────
   sprintMode:         false, // True while 50-card sprint is active
@@ -98,6 +97,7 @@ function _cacheDom() {
     subjectPicker:     document.getElementById('subject-picker'),
     subjectGrid:       document.getElementById('subject-grid'),
     cardArea:          document.getElementById('card-area'),
+    cramView:          document.getElementById('cram-view'),
     btnBackSubjects:   document.getElementById('btn-back-subjects'),
 
     // Card elements
@@ -539,8 +539,6 @@ function markSeen(questionId) {
     try { _checkShareMilestone(seen.length); } catch(e) {}
   }
   _updateStats();
-  // Track daily goal progress (every card action counts)
-  try { _trackTodayProgress(); } catch(e) {}
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -630,12 +628,16 @@ function _renderCard(question, skipStack) {
     card.style.transition = '';
   }
 
-  // Fill content
+  // Fill content — use inner spans so flex layout of parent is never disturbed
   const cardNum = State.currentIndex + 1;
-  if (DOM.cardNumber)         DOM.cardNumber.textContent         = `Q${cardNum}`;
-  if (DOM.cardQuestion)       DOM.cardQuestion.textContent       = question.question;
-  if (DOM.cardAnswer)         DOM.cardAnswer.textContent         = question.answer;
-  if (DOM.cardQuestionRepeat) DOM.cardQuestionRepeat.textContent = question.question;
+  if (DOM.cardNumber) DOM.cardNumber.textContent = `Q${cardNum}`;
+
+  const qInner = document.getElementById('card-question-inner');
+  const aInner = document.getElementById('card-answer-inner');
+  const rInner = document.getElementById('card-question-repeat-inner');
+  if (qInner) qInner.innerHTML = _linkGlossary(question.question);
+  if (aInner) aInner.innerHTML = _linkGlossary(question.answer);
+  if (rInner) rInner.innerHTML = _linkGlossary(question.question);
 
   // Show swipe guide on very first card ever
   if (!ls_get(LS.GUIDE_SHOWN)) {
@@ -953,8 +955,24 @@ function selectSubject(subject) {
   DOM.subjectPicker?.classList.add('hidden');
   DOM.cardArea?.classList.remove('hidden');
 
-  _updateDailyProgress();
-  _renderCard(State.dailyCards[0]);
+  if (State.cramMode) {
+    // ── CRAM MODE: hide swipe UI, show scrolling list ──────────
+    DOM.cardArena?.classList.add('hidden');
+    DOM.actionRow?.classList.add('hidden');
+    DOM.sprintHud?.classList.add('hidden');
+    DOM.swipeGuide?.classList.add('hidden');
+    _renderCramView();
+  } else {
+    // ── SWIPE MODE: hide cram view, show swipe UI ──────────────
+    if (DOM.cramView) {
+      DOM.cramView.classList.add('hidden');
+      DOM.cramView.innerHTML = '';
+    }
+    DOM.cardArena?.classList.remove('hidden');
+    DOM.actionRow?.classList.remove('hidden');
+    _updateDailyProgress();
+    _renderCard(State.dailyCards[0]);
+  }
 }
 
 function showSubjectPicker() {
@@ -962,6 +980,16 @@ function showSubjectPicker() {
   SwipeEngine.destroy();
   State.activeSubject = null;
   State.currentIndex  = 0;
+
+  // Always restore card arena visibility so swipe mode works next time
+  DOM.cardArena?.classList.remove('hidden');
+  DOM.actionRow?.classList.remove('hidden');
+
+  // Clear cram view
+  if (DOM.cramView) {
+    DOM.cramView.classList.add('hidden');
+    DOM.cramView.innerHTML = '';
+  }
 
   DOM.cardArea?.classList.add('hidden');
   DOM.subjectPicker?.classList.remove('hidden');
@@ -1002,6 +1030,10 @@ function renderSavedTab() {
   // Hide quiz button when empty
   if (DOM.btnQuizSaved)
     DOM.btnQuizSaved.classList.toggle('hidden', raw.length === 0);
+
+  // Hide/show WhatsApp dump button
+  const dumpBtn = document.getElementById('btn-whatsapp-dump');
+  if (dumpBtn) dumpBtn.classList.toggle('hidden', raw.length === 0);
 
   if (raw.length === 0) {
     DOM.savedEmpty?.classList.remove('hidden');
@@ -1479,9 +1511,6 @@ function renderProgressTab() {
 
   // Refresh user count display
   _initUserCount();
-
-  // Daily goal ring
-  _renderGoalSection();
 
   // Weekly heatmap
   _renderHeatmap();
@@ -1979,154 +2008,209 @@ function _shareApp() {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  CONFETTI ENGINE  — pure-canvas burst, no dependencies
+//  GLOSSARY
 // ════════════════════════════════════════════════════════════════
 
-const Confetti = (() => {
-  const COLORS = [
-    '#00E5FF','#00E676','#FFAB00','#FF5252',
-    '#7C4DFF','#FF6D00','#FF4081','#FFD740',
-    '#69F0AE','#40C4FF',
-  ];
+const GLOSSARY = {
+  'photoperiodism': 'The response of a plant\'s flowering to the relative lengths of day and night. Plants are classified as short-day, long-day, or day-neutral.',
+  'vernalisation':  'The process by which prolonged cold exposure triggers flowering in plants. Wheat and rye require vernalisation before they can produce flowers.',
+  'apomixis':       'Reproduction in plants without fertilisation, producing seeds genetically identical to the mother. Studied to fix hybrid vigour permanently.',
+  'allelopathy':    'The release of biochemicals by one plant that inhibit or stimulate nearby plants. Used as a natural weed suppression strategy.',
+  'hydroponics':    'A method of growing plants in nutrient-rich water without soil. Roots are directly exposed to mineral solutions for faster growth.',
+  'aeroponics':     'Growing plants with roots suspended in air, misted with nutrients. Uses less water than hydroponics and delivers more oxygen to roots.',
+  'intercropping':  'Growing two or more crops simultaneously on the same field. Improves soil health, reduces pests, and increases overall yield.',
+  'monoculture':    'Farming a single crop species over a large area. Maximises short-term yield but increases vulnerability to pests and soil depletion.',
+  'phenology':      'The study of cyclic seasonal events in plants and animals, such as flowering dates and leaf fall. Critical for timing farm operations.',
+  'stomata':        'Tiny pores on leaf surfaces that regulate gas exchange and water vapour loss. They open and close in response to light and humidity.',
+  'transpiration':  'The process by which water travels through the plant and evaporates from leaves into the atmosphere via stomata.',
+  'germination':    'The process by which a seed sprouts and begins to grow after absorbing water and receiving the right temperature conditions.',
+  'dormancy':       'A state of suspended growth in seeds or buds during unfavourable conditions. Ensures survival until conditions improve.',
+  'tillage':        'The mechanical preparation of soil for cultivation by ploughing or turning. Zero tillage conserves soil structure and moisture.',
+  'mulching':       'Covering soil surface with organic or inorganic material to retain moisture, suppress weeds, and regulate soil temperature.',
+  'fertigation':    'The technique of applying fertilisers directly through an irrigation system. Improves nutrient efficiency and reduces wastage.',
+  'ratooning':      'Allowing a crop to regrow from the root or stubble after harvesting. Common in sugarcane, banana, and rice cultivation.',
+  'lodging':        'The permanent displacement of crop stems from upright position due to wind or weak stems. Causes significant yield losses.',
+  'etiolation':     'Abnormal elongation of plant stems and yellowing caused by insufficient light. The plant stretches towards the nearest light source.',
+  'pedology':       'The branch of science dealing with study of soils in their natural environment, including formation, classification, and mapping.',
+  'humus':          'The dark organic component of soil formed by decomposition of plant and animal matter. Improves structure, water retention, and fertility.',
+  'leaching':       'The downward movement of soluble nutrients through the soil by water. Excessive leaching depletes essential minerals from the root zone.',
+  'salinity':       'The concentration of dissolved salts in soil or water. High soil salinity reduces water availability to plants and damages root cells.',
+  'sodicity':       'A soil condition caused by excess sodium, leading to poor structure, surface crusting, and reduced water infiltration capacity.',
+  'laterite':       'A highly weathered soil rich in iron and aluminium oxides, common in tropical climates. Hardens on exposure to air; poor in nutrients.',
+  'mycorrhizae':    'Symbiotic fungi that colonise plant roots, extending the root surface area and improving uptake of phosphorus and water.',
+  'rhizobium':      'Nitrogen-fixing bacteria in root nodules of legumes. They convert atmospheric nitrogen into ammonia, reducing fertiliser needs.',
+  'erosion':        'The wearing away of topsoil by wind or water. One of the leading causes of land degradation and loss of agricultural productivity.',
+  'compaction':     'The compression of soil particles reducing pore space. It limits root penetration, water infiltration, and air circulation.',
+  'waterlogging':   'Saturation of soil with water depleting oxygen from the root zone. Causes anaerobic conditions leading to root death in most crops.',
+  'evapotranspiration': 'The combined water loss by evaporation from soil and transpiration from plants. Key for calculating crop water requirements.',
+  'aquifer':        'An underground layer of permeable rock that stores groundwater. Over-extraction leads to permanent water table depletion.',
+  'watershed':      'The total land area draining into a common river or water body. Critical for flood control, recharge, and irrigation planning.',
+  'IPM':            'Integrated Pest Management — combining biological, cultural, physical, and chemical tools to minimise pest damage and input costs.',
+  'biocontrol':     'Using living organisms such as predatory insects or beneficial pathogens to control pests, reducing dependence on chemicals.',
+  'nematode':       'Microscopic roundworms in soil. Some are beneficial predators of pests; others are plant parasites causing serious root damage.',
+  'pathogen':       'Any organism — fungus, bacterium, virus, or parasite — that causes disease in plants or animals.',
+  'ruminant':       'A mammal that digests plant food through a multi-chambered stomach. Cattle, buffalo, sheep, and goats are ruminants.',
+  'monogastric':    'An animal with a single-chambered stomach, such as pigs and poultry. They cannot digest cellulose efficiently.',
+  'zoonosis':       'A disease naturally transmissible from animals to humans. Examples include rabies, avian influenza, and brucellosis.',
+  'parturition':    'The process of giving birth in animals — calving in cattle, farrowing in pigs, lambing in sheep, kidding in goats.',
+  'lactation':      'The production and secretion of milk by mammary glands following parturition. Influenced by breed, nutrition, and health.',
+  'mastitis':       'Inflammation of the mammary gland in dairy animals, usually caused by bacterial infection. Reduces milk yield and quality.',
+  'FCR':            'Feed Conversion Ratio — weight of feed consumed per unit of body weight gained. Lower FCR means better feed efficiency.',
+  'aquaculture':    'The controlled farming of fish, shellfish, algae, or other aquatic organisms. The world\'s fastest-growing food production sector.',
+  'eutrophication': 'Excessive enrichment of water with nutrients causing algal blooms and oxygen depletion. Primarily caused by agricultural runoff.',
+  'biomass':        'The total mass of all living organisms in a given area. In aquaculture, it refers to total weight of fish being produced.',
+  'MSP':            'Minimum Support Price — the guaranteed price set by the Indian government at which it procures crops from farmers.',
+  'procurement':    'The process by which government agencies purchase food grains from farmers at MSP for the central food security buffer stock.',
+  'subsidies':      'Financial support given by the government to reduce production costs for farmers on inputs like fertilisers and seeds.',
+  'PDS':            'Public Distribution System — India\'s food security network supplying subsidised grains to eligible poor households.',
+  'NABARD':         'National Bank for Agriculture and Rural Development — India\'s apex bank for agricultural credit and rural development.',
+  'cooperatives':   'Farmer-owned organisations that pool resources for buying inputs, processing produce, and accessing credit on better terms.',
+  'FPO':            'Farmer Producer Organisation — a company owned by farmers to improve collective bargaining power and market access.',
+  'biodiversity':   'The variety of life on Earth encompassing genes, species, and ecosystems. Essential for food security and climate resilience.',
+  'agroforestry':   'A land-use system integrating trees with crops or livestock. Improves soil health, biodiversity, income, and microclimate.',
+  'deforestation':  'The permanent clearing of forest cover for agriculture or development. Accelerates soil erosion and destroys biodiversity.',
+  'desertification':'The degradation of fertile dryland into desert caused by drought, overgrazing, or poor land management.',
+  'methane':        'A potent greenhouse gas released by ruminant digestion, rice paddies, and manure. About 25–80× more warming than CO₂.',
+  'GMO':            'Genetically Modified Organism — a plant or animal whose DNA has been altered using genetic engineering tools.',
+  'hybrid seed':    'Seed from controlled cross-pollination of two selected parent varieties. Higher yield and vigour but seeds cannot be saved.',
+  'biofortification': 'Increasing the nutritional content of crops through breeding or biotechnology. Golden Rice with vitamin A is a key example.',
+  'precision farming': 'Using GPS, sensors, drones, and analytics to apply inputs only where and when needed for maximum efficiency.',
+  'remote sensing': 'Acquiring information about crops or soil from a distance using satellite or aerial imagery. Used to detect crop stress.',
+  'GIS':            'Geographic Information System — software capturing and analysing spatial data for soil mapping and field planning.',
+  'GDP':            'Gross Domestic Product — the total monetary value of all goods and services produced in a country in a time period.',
+  'inflation':      'A sustained rise in the general price level of goods and services, reducing the purchasing power of money.',
+  'repo rate':      'The rate at which the RBI lends to commercial banks. Raising it curbs inflation; reducing it stimulates growth.',
+  'SEBI':           'Securities and Exchange Board of India — the statutory regulator of India\'s capital and securities markets.',
+  'GST':            'Goods and Services Tax — India\'s unified indirect tax applied on the supply of goods and services across the country.',
+  'disinvestment':  'The government reducing its equity stake in public sector enterprises by selling shares to private investors.',
+  'Kisan Credit Card': 'A revolving credit facility for Indian farmers for seeds, fertilisers, and post-harvest expenses at subsidised rates.',
+};
 
-  function burst() {
-    const canvas  = document.createElement('canvas');
-    canvas.style.cssText =
-      'position:fixed;inset:0;width:100%;height:100%;' +
-      'pointer-events:none;z-index:9999;';
-    canvas.width  = window.innerWidth;
-    canvas.height = window.innerHeight;
-    document.body.appendChild(canvas);
-
-    const ctx    = canvas.getContext('2d');
-    const cx     = canvas.width / 2;
-    const cy     = canvas.height * 0.35;
-
-    const pieces = Array.from({ length: 160 }, () => ({
-      x:    cx + (Math.random() - 0.5) * 80,
-      y:    cy,
-      vx:   (Math.random() - 0.5) * 16,
-      vy:   (Math.random() - 1.6) * 14,
-      w:    5 + Math.random() * 9,
-      h:    4 + Math.random() * 6,
-      color: COLORS[Math.floor(Math.random() * COLORS.length)],
-      rot:  Math.random() * Math.PI * 2,
-      rVel: (Math.random() - 0.5) * 0.25,
-      life: 1.0 + Math.random() * 0.4,
-    }));
-
-    let rafId;
-
-    function tick() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-      let anyAlive = false;
-
-      pieces.forEach(p => {
-        p.vy  += 0.38;            // gravity
-        p.vx  *= 0.995;           // light air resistance
-        p.x   += p.vx;
-        p.y   += p.vy;
-        p.rot += p.rVel;
-        p.life -= 0.012;
-
-        if (p.life <= 0 || p.y > canvas.height + 30) return;
-        anyAlive = true;
-
-        ctx.save();
-        ctx.globalAlpha = Math.max(0, Math.min(1, p.life));
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rot);
-        ctx.fillStyle = p.color;
-        ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
-        ctx.restore();
-      });
-
-      if (anyAlive) {
-        rafId = requestAnimationFrame(tick);
-      } else {
-        canvas.remove();
-      }
-    }
-
-    rafId = requestAnimationFrame(tick);
-    // Hard safety cap — remove canvas after 7 s regardless
-    setTimeout(() => { cancelAnimationFrame(rafId); canvas.remove(); }, 7000);
-  }
-
-  return { burst };
-})();
-
-// ════════════════════════════════════════════════════════════════
-//  DAILY GOAL — tracking + rendering
-// ════════════════════════════════════════════════════════════════
-
-/** Increment today's progress counter; fire confetti if goal is reached */
-function _trackTodayProgress() {
-  const todayStr = today();
-  let tp = ls_get(LS.TODAY_PROG, { date: '', count: 0 });
-  if (tp.date !== todayStr) tp = { date: todayStr, count: 0 };
-  tp.count++;
-  ls_set(LS.TODAY_PROG, tp);
-
-  const goal = ls_get(LS.DAILY_GOAL, 20);
-  // Fire only exactly on hitting the goal (not on every subsequent card)
-  if (tp.count === goal) {
-    TG.Haptic.success();
-    showToast('🎊 Daily goal reached! Incredible work!', 3500);
-    setTimeout(() => Confetti.burst(), 250);
-  }
-}
-
-/** Render the goal ring + caption + picker in the Progress tab */
-function _renderGoalSection() {
-  const todayStr = today();
-  let   tp       = ls_get(LS.TODAY_PROG, { date: '', count: 0 });
-  if (tp.date !== todayStr) tp = { date: todayStr, count: 0 };
-
-  const goal     = ls_get(LS.DAILY_GOAL, 20);
-  const count    = tp.count;
-  const pct      = Math.min(count / Math.max(goal, 1), 1);
-
-  // SVG ring: r=50, so circumference = 2πr ≈ 314.16
-  const CIRC = 2 * Math.PI * 50;
-
-  const countEl   = document.getElementById('goal-today-count');
-  const targetEl  = document.getElementById('goal-target-label');
-  const captionEl = document.getElementById('goal-caption');
-  const ringFill  = document.getElementById('goal-ring-fill');
-
-  if (countEl)  countEl.textContent  = count;
-  if (targetEl) targetEl.textContent = goal;
-
-  if (captionEl) {
-    captionEl.textContent = count >= goal
-      ? '🎊 Goal complete! Come back tomorrow.'
-      : `${goal - count} card${goal - count !== 1 ? 's' : ''} to go today`;
-  }
-
-  if (ringFill) {
-    ringFill.style.strokeDasharray  = `${CIRC}`;
-    ringFill.style.strokeDashoffset = `${CIRC * (1 - pct)}`;
-    ringFill.classList.toggle('goal-complete', count >= goal);
-  }
-
-  // Mark the active goal button
-  document.querySelectorAll('.goal-opt').forEach(btn => {
-    btn.classList.toggle('active', parseInt(btn.dataset.goal) === goal);
+function _linkGlossary(text) {
+  if (!text) return '';
+  let html = _escHtml(text);
+  const keys = Object.keys(GLOSSARY).sort((a, b) => b.length - a.length);
+  keys.forEach(term => {
+    const esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re  = new RegExp(`(?<![\\w-])(${esc})(?![\\w-])`, 'gi');
+    html = html.replace(re, m =>
+      `<span class="glossary-term" data-term="${_escHtml(term.toLowerCase())}">${m}</span>`
+    );
   });
+  return html;
 }
 
-/** Wire up goal picker buttons — call once after DOM is ready */
-function _initGoalPicker() {
-  document.querySelectorAll('.goal-opt').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const newGoal = parseInt(btn.dataset.goal);
-      ls_set(LS.DAILY_GOAL, newGoal);
-      TG.Haptic.select();
-      _renderGoalSection();
-      showToast(`🎯 Daily goal set to ${newGoal} cards`);
+// ════════════════════════════════════════════════════════════════
+//  CRAM MODE — scrollable cheat-sheet
+// ════════════════════════════════════════════════════════════════
+
+function _renderCramView() {
+  const container = DOM.cramView;
+  if (!container) return;
+
+  container.innerHTML = '';
+  container.classList.remove('hidden');
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'cram-header';
+  header.innerHTML = `
+    <span class="cram-header-count">${State.dailyCards.length} questions</span>
+    <span class="cram-header-hint">Tap a card to reveal the answer</span>
+  `;
+  container.appendChild(header);
+
+  // Render every Q&A row
+  State.dailyCards.forEach((q, i) => {
+    const item = document.createElement('div');
+    item.className = 'cram-item';
+    item.style.setProperty('--ci', Math.min(i, 40)); // cap delay so late items don't wait forever
+
+    const cat = q.category
+      ? `<span class="cram-category">${_escHtml(q.category)}</span>` : '';
+
+    item.innerHTML = `
+      ${cat}
+      <div class="cram-question">
+        <span class="cram-num">Q${i + 1}</span>
+        <span class="cram-question-text">${_linkGlossary(q.question)}</span>
+      </div>
+      <div class="cram-answer">${_escHtml(q.answer)}</div>
+    `;
+
+    item.addEventListener('click', () => {
+      item.classList.toggle('cram-revealed');
+      TG.Haptic.light();
     });
+
+    container.appendChild(item);
   });
+
+  const footer = document.createElement('div');
+  footer.className = 'cram-footer';
+  footer.innerHTML = `<p class="cram-footer-tip">Tap any card to reveal / hide the answer</p>`;
+  container.appendChild(footer);
+}
+
+// ── Mode toggle ───────────────────────────────────────────────
+function _initModeToggle() {
+  const swipeBtn = document.getElementById('mode-btn-swipe');
+  const cramBtn  = document.getElementById('mode-btn-cram');
+  if (!swipeBtn || !cramBtn) return;
+
+  function _setMode(mode) {
+    State.cramMode = (mode === 'cram');
+    swipeBtn.classList.toggle('active',  !State.cramMode);
+    cramBtn.classList.toggle('active',    State.cramMode);
+    TG.Haptic.select();
+    const sub = document.getElementById('subject-sub-text');
+    if (sub) sub.textContent = State.cramMode
+      ? 'Select a subject to open the full cheat sheet'
+      : 'Select any subject to start swiping cards';
+  }
+
+  swipeBtn.addEventListener('click', () => _setMode('swipe'));
+  cramBtn.addEventListener('click',  () => _setMode('cram'));
+}
+
+// ── Glossary sheet ────────────────────────────────────────────
+function _initGlossarySheet() {
+  const overlay  = document.getElementById('glossary-overlay');
+  const termEl   = document.getElementById('glossary-term-title');
+  const defEl    = document.getElementById('glossary-definition');
+  const closeBtn = document.getElementById('glossary-close');
+  if (!overlay) return;
+
+  document.addEventListener('click', (e) => {
+    const span = e.target.closest('.glossary-term');
+    if (!span) return;
+    e.stopPropagation();
+    const key = span.dataset.term;
+    const def = GLOSSARY[key] ||
+      Object.entries(GLOSSARY).find(([k]) => k.toLowerCase() === key)?.[1];
+    if (!def) return;
+    termEl.textContent = span.textContent;
+    defEl.textContent  = def;
+    overlay.classList.remove('hidden');
+    requestAnimationFrame(() => overlay.classList.add('open'));
+    TG.Haptic.light();
+  });
+
+  function _close() {
+    overlay.classList.remove('open');
+    setTimeout(() => overlay.classList.add('hidden'), 300);
+    TG.Haptic.select();
+  }
+
+  closeBtn?.addEventListener('click', _close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) _close(); });
+
+  const sheet = document.getElementById('glossary-sheet');
+  let _sy = 0;
+  sheet?.addEventListener('touchstart', e => { _sy = e.touches[0].clientY; }, { passive: true });
+  sheet?.addEventListener('touchend',   e => {
+    if (e.changedTouches[0].clientY - _sy > 55) _close();
+  }, { passive: true });
 }
 
 async function boot() {
@@ -2157,7 +2241,8 @@ async function boot() {
   // 6. Init tabs and buttons
   _initTabs();
   _initButtons();
-  _initGoalPicker();
+  _initModeToggle();
+  _initGlossarySheet();
 
   // 7. Dismiss splash
   await _delay(300);
@@ -2179,6 +2264,40 @@ async function boot() {
   setTimeout(() => {
     try { _showChannelPopup(); } catch(e) { console.warn('[ChannelPopup]', e); }
   }, 350);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  WHATSAPP DUMP  exportToWhatsApp()
+//  Formats all saved cards into a WhatsApp-ready message and
+//  opens wa.me so students can paste into their personal chat.
+// ════════════════════════════════════════════════════════════════
+
+function exportToWhatsApp() {
+  const saved = ls_get(LS.SAVED, []);
+  if (!saved.length) return;
+
+  TG.Haptic.medium();
+
+  const header  = '📚 *My AGRIMETS Revision Notes*';
+  const footer  = '\n⚡ Practised via Agrimets Mini App\n🔗 t.me/agrimets_bot';
+
+  const body = saved.map((item, i) =>
+    `🔸 *Q${i + 1}:* ${item.question}\n🔹 *A:* ${item.answer}${item.category ? `\n📂 ${item.category}` : ''}`
+  ).join('\n\n');
+
+  const message    = `${header}\n\n${body}${footer}`;
+  const waUrl      = `https://wa.me/?text=${encodeURIComponent(message)}`;
+
+  // Open through Telegram (respects Mini App sandbox) or direct
+  try {
+    if (window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(waUrl);
+    } else {
+      window.open(waUrl, '_blank');
+    }
+  } catch (e) {
+    window.open(waUrl, '_blank');
+  }
 }
 
 // ── Wait for DOM ──────────────────────────────────────────────
