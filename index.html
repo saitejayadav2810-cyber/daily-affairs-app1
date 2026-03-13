@@ -106,8 +106,49 @@
           <h2 class="subject-title">Choose a Subject</h2>
           <p class="subject-sub">Select any subject to start swiping cards</p>
         </div>
+
+        <!-- ── 50-CARD SPRINT BUTTON ── -->
+        <button class="sprint-cta-btn" id="btn-sprint">
+          <div class="sprint-cta-left">
+            <span class="sprint-cta-icon">⚡</span>
+            <div class="sprint-cta-text">
+              <div class="sprint-cta-title">50-Card Sprint</div>
+              <div class="sprint-cta-sub">10 min · No answers · Just decide</div>
+            </div>
+          </div>
+          <span class="sprint-cta-arrow">→</span>
+        </button>
+
         <div class="subject-grid" id="subject-grid">
           <!-- Populated by JS from sheet categories -->
+        </div>
+      </div>
+
+      <!-- ── SPRINT RESULT SCREEN ── -->
+      <div class="sprint-result hidden" id="sprint-result">
+        <div class="sprint-result-inner">
+          <div class="sprint-result-icon">⚡</div>
+          <h2 class="sprint-result-title">Sprint Complete!</h2>
+          <div class="sprint-result-pct" id="sprint-result-pct">0%</div>
+          <div class="sprint-result-pct-label">Accuracy</div>
+          <div class="sprint-result-stats">
+            <div class="sprint-rs">
+              <div class="sprint-rs-val green" id="sprint-rs-known">0</div>
+              <div class="sprint-rs-label">Known ✓</div>
+            </div>
+            <div class="sprint-rs">
+              <div class="sprint-rs-val red" id="sprint-rs-unknown">0</div>
+              <div class="sprint-rs-label">Unknown ✗</div>
+            </div>
+            <div class="sprint-rs">
+              <div class="sprint-rs-val" id="sprint-rs-total">0</div>
+              <div class="sprint-rs-label">Total</div>
+            </div>
+          </div>
+          <div class="sprint-result-actions">
+            <button class="sprint-again-btn" id="btn-sprint-again">⚡ Sprint Again</button>
+            <button class="sprint-home-btn" id="btn-sprint-home">← Back to Subjects</button>
+          </div>
         </div>
       </div>
 
@@ -130,6 +171,18 @@
         <div class="daily-strip slim">
           <div class="daily-progress-bar">
             <div class="daily-progress-fill" id="daily-progress-fill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <!-- SPRINT HUD (timer + score — shown only in sprint mode) -->
+        <div class="sprint-hud hidden" id="sprint-hud">
+          <div class="sprint-hud-timer" id="sprint-hud-timer">10:00</div>
+          <div class="sprint-hud-divider"></div>
+          <div class="sprint-hud-count" id="sprint-hud-count">0 / 50</div>
+          <div class="sprint-hud-divider"></div>
+          <div class="sprint-hud-scores">
+            <span class="sprint-hud-known" id="sprint-hud-known">0 ✓</span>
+            <span class="sprint-hud-unknown" id="sprint-hud-unknown">0 ✗</span>
           </div>
         </div>
 
@@ -169,7 +222,7 @@
         </div>
 
         <!-- ACTION BUTTONS -->
-        <div class="action-row">
+        <div class="action-row" id="action-row">
           <button class="action-btn skip-btn" id="btn-skip">
             <span class="action-icon">⏭</span>
             <span class="action-label">Skip</span>
@@ -185,6 +238,18 @@
           <button class="action-btn next-btn" id="btn-next">
             <span class="action-icon">✓</span>
             <span class="action-label">Done</span>
+          </button>
+        </div>
+
+        <!-- SPRINT ACTION BUTTONS (shown only in sprint mode) -->
+        <div class="sprint-action-row hidden" id="sprint-action-row">
+          <button class="sprint-action-btn sprint-unknown-btn" id="btn-sprint-unknown">
+            <span class="sprint-action-icon">✗</span>
+            <span class="sprint-action-label">Don't Know</span>
+          </button>
+          <button class="sprint-action-btn sprint-known-btn" id="btn-sprint-known">
+            <span class="sprint-action-icon">✓</span>
+            <span class="sprint-action-label">Know It!</span>
           </button>
         </div>
 
@@ -207,6 +272,25 @@
         <span class="page-subtitle" id="saved-count-label">0 cards</span>
       </div>
 
+      <!-- ── QUIZ SAVED BUTTON ── -->
+      <button class="quiz-saved-btn" id="btn-quiz-saved">
+        <span class="quiz-saved-left">
+          <span class="quiz-saved-icon">🎯</span>
+          <span>Quiz My Saved Cards</span>
+        </span>
+        <span class="quiz-saved-arrow">→</span>
+      </button>
+
+      <!-- ── SEARCH BAR ── -->
+      <div class="tab-search-wrap" id="saved-search-wrap">
+        <div class="tab-search-inner">
+          <span class="tab-search-icon">🔍</span>
+          <input class="tab-search-input" id="saved-search" type="text"
+                 placeholder="Search saved cards…" autocomplete="off" autocorrect="off" />
+          <button class="tab-search-clear hidden" id="saved-search-clear" aria-label="Clear">✕</button>
+        </div>
+      </div>
+
       <div class="saved-list" id="saved-list">
         <!-- Populated by JS -->
       </div>
@@ -225,6 +309,16 @@
       <div class="page-header">
         <h2 class="page-title">History</h2>
         <span class="page-subtitle" id="history-count-label">0 cards</span>
+      </div>
+
+      <!-- ── SEARCH BAR ── -->
+      <div class="tab-search-wrap" id="history-search-wrap">
+        <div class="tab-search-inner">
+          <span class="tab-search-icon">🔍</span>
+          <input class="tab-search-input" id="history-search" type="text"
+                 placeholder="Search history…" autocomplete="off" autocorrect="off" />
+          <button class="tab-search-clear hidden" id="history-search-clear" aria-label="Clear">✕</button>
+        </div>
       </div>
 
       <!-- Filter pills -->
