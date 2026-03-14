@@ -37,6 +37,8 @@
   /* Typography */
   --font-display: 'Syne', sans-serif;
   --font-body:    'Lora', serif;
+  --font-title:   'Playfair Display', Georgia, serif;   /* category / test names */
+  --font-qa:      'Times New Roman', Times, serif;      /* questions & answers */
 
   /* Spacing */
   --header-h:     56px;
@@ -468,7 +470,7 @@ body {
 }
 
 .subject-card-name {
-  font-family: var(--font-display);
+  font-family: var(--font-title);
   font-size: 13px;
   font-weight: 700;
   color: var(--text-primary);
@@ -729,7 +731,7 @@ body {
 }
 
 .card-question {
-  font-family: 'Times New Roman', Times, serif;
+  font-family: var(--font-qa);
   font-size: clamp(18px, 5vw, 28px);
   font-weight: 700;
   line-height: 1.65;
@@ -786,7 +788,7 @@ body {
 }
 
 .card-answer {
-  font-family: 'Times New Roman', Times, serif;
+  font-family: var(--font-qa);
   font-size: clamp(20px, 6vw, 32px);
   font-weight: 700;
   color: #00FF88;
@@ -1074,7 +1076,7 @@ body {
 }
 
 .saved-item-question {
-  font-family: 'Times New Roman', Times, serif;
+  font-family: var(--font-qa);
   font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
@@ -1083,7 +1085,7 @@ body {
 }
 
 .saved-item-answer {
-  font-family: 'Times New Roman', Times, serif;
+  font-family: var(--font-qa);
   font-size: 16px;
   color: var(--green);
   font-weight: 500;
@@ -1854,7 +1856,7 @@ body {
 .badge-saved   { background: rgba(0,229,255,0.12);  color: var(--cyan); border: 1px solid rgba(0,229,255,0.25); }
 
 .hist-item-question {
-  font-family: 'Times New Roman', Times, serif;
+  font-family: var(--font-qa);
   font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
@@ -1862,7 +1864,7 @@ body {
   margin-bottom: 10px;
 }
 .hist-item-answer {
-  font-family: 'Times New Roman', Times, serif;
+  font-family: var(--font-qa);
   font-size: 18px;
   font-weight: 700;
   color: #00FF88;
@@ -2489,7 +2491,7 @@ body {
 .sprint-review-known   .sprint-review-category { color: var(--green); }
 
 .sprint-review-question {
-  font-family: 'Times New Roman', Times, serif;
+  font-family: var(--font-qa);
   font-size: 17px;
   font-weight: 700;
   color: var(--text-primary);
@@ -2498,7 +2500,7 @@ body {
 }
 
 .sprint-review-answer {
-  font-family: 'Times New Roman', Times, serif;
+  font-family: var(--font-qa);
   font-size: 16px;
   font-weight: 500;
   padding: 8px 12px;
@@ -2645,7 +2647,7 @@ body {
   display: flex;
   align-items: baseline;
   gap: 7px;
-  font-family: 'Times New Roman', Times, serif;
+  font-family: var(--font-qa);
   font-size: 17px;
   font-weight: 700;
   color: var(--text-primary);
@@ -2662,7 +2664,7 @@ body {
 
 /* Hidden answer — revealed on tap */
 .cram-answer {
-  font-family: 'Times New Roman', Times, serif;
+  font-family: var(--font-qa);
   font-size: 17px;
   font-weight: 700;
   color: transparent;
@@ -3284,9 +3286,9 @@ body {
 .mock-back-btn:active { color: var(--cyan); }
 
 .mock-list-title {
-  font-family: var(--font-display);
+  font-family: var(--font-title);
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 2px;
 }
@@ -3400,9 +3402,9 @@ body {
 }
 
 .mock-cat-name {
-  font-family: var(--font-display);
+  font-family: var(--font-title);
   font-size: 15px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
 }
@@ -3452,7 +3454,7 @@ body {
 }
 
 .mock-test-name {
-  font-family: var(--font-display);
+  font-family: var(--font-title);
   font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
@@ -3540,7 +3542,7 @@ body {
 }
 
 #mock-q-text {
-  font-family: 'Times New Roman', Times, serif;
+  font-family: var(--font-qa);
   font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
@@ -3563,7 +3565,7 @@ body {
   padding: 15px 18px;
   border-radius: var(--r-md);
   text-align: left;
-  font-family: 'Times New Roman', Times, serif;
+  font-family: var(--font-qa);
   font-size: 16px;
   font-weight: 500;
   cursor: pointer;
@@ -3763,7 +3765,7 @@ body {
 .review-item.wrong   { border-left-color: var(--red); }
 .review-item.skipped { border-left-color: var(--amber); }
 
-.rev-q   { font-family: 'Times New Roman', Times, serif; font-size: 16px; font-weight: 700; color: var(--text-primary); line-height: 1.45; margin-bottom: 8px; }
+.rev-q   { font-family: var(--font-qa); font-size: 16px; font-weight: 700; color: var(--text-primary); line-height: 1.45; margin-bottom: 8px; }
 .rev-ans { font-size: 13px; color: var(--green); font-weight: 600; }
 .rev-user{ font-size: 13px; color: var(--red); margin-top: 4px; font-weight: 500; }
 
@@ -3878,9 +3880,9 @@ body {
 }
 
 .sched-name {
-  font-family: var(--font-display);
+  font-family: var(--font-title);
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
   white-space: nowrap;
@@ -3993,9 +3995,9 @@ body {
 }
 
 .smb-title {
-  font-family: var(--font-display);
+  font-family: var(--font-title);
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
   white-space: nowrap;
