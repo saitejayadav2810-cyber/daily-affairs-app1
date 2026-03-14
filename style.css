@@ -42,7 +42,11 @@
   --header-h:     56px;
   --tabbar-h:     64px;
   --safe-bottom:  env(safe-area-inset-bottom, 0px);
-  --safe-top:     env(safe-area-inset-top, 0px);
+
+  /* Telegram fullscreen safe area — set by telegram.js at runtime.
+     Falls back to env() for non-Telegram browsers. */
+  --tg-safe-top:    env(safe-area-inset-top, 0px);
+  --tg-safe-bottom: env(safe-area-inset-bottom, 0px);
 
   /* Radius */
   --r-sm:  8px;
@@ -95,7 +99,7 @@ body {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: calc(60px + var(--safe-top)) 20px 60px;
+  padding: calc(60px + var(--tg-safe-top)) 20px 60px;
   z-index: 9999;
   transition: opacity 0.12s ease, transform 0.12s ease;
 }
@@ -220,8 +224,8 @@ body {
 
 /* ── HEADER ─────────────────────────────────────────────────── */
 .app-header {
-  height: calc(var(--header-h) + var(--safe-top));
-  padding-top: var(--safe-top);
+  height: calc(var(--header-h) + var(--tg-safe-top));
+  padding-top: var(--tg-safe-top);
   display: flex;
   align-items: center;
   justify-content: space-between;
