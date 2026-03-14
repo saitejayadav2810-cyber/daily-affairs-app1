@@ -23,6 +23,19 @@ const TG = (() => {
     // Expand to full height
     twa.expand();
 
+    // ── Hide the top header bar (Bot name / × button) ────────
+    // requestFullscreen() is available from Telegram WebApp API v8.0+
+    if (typeof twa.requestFullscreen === 'function') {
+      twa.requestFullscreen();
+    }
+
+    // Re-enter fullscreen if user exits it (e.g. via system gesture)
+    twa.onEvent('fullscreenChanged', () => {
+      if (!twa.isFullscreen && typeof twa.requestFullscreen === 'function') {
+        twa.requestFullscreen();
+      }
+    });
+
     // Apply Telegram's colour theme to CSS variables
     _applyTheme();
 
