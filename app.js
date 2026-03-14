@@ -45,6 +45,8 @@ const LS = {
   STATS:         'dca_stats',           // { streak, lastActive, totalSeen, daysActive }
   GUIDE_SHOWN:   'dca_guide_shown',     // Whether swipe guide has been dismissed
   HISTORY:       'dca_history',         // [{id, question, answer, category, action, ts}]
+  DAILY_TARGET:  'dca_daily_target',    // User's daily card goal (number)
+  DAILY_DONE:    'dca_daily_done',      // { date, count } — cards done today
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -200,6 +202,18 @@ function _cacheDom() {
     // Ads
     adBanner:          document.getElementById('ad-banner'),
     adClose:           document.getElementById('ad-close'),
+
+    // Daily target setter
+    dtrFillCircle:     document.getElementById('dtr-fill-circle'),
+    dtrPct:            document.getElementById('dtr-pct'),
+    dtrBarFill:        document.getElementById('dtr-bar-fill'),
+    dtrStatus:         document.getElementById('dtr-status'),
+    dtrGoalVal:        document.getElementById('dtr-goal-val'),
+    dtrTodayCount:     document.getElementById('daily-target-today-count'),
+    dtrCustomRow:      document.getElementById('dtr-custom-row'),
+    dtrCustomInput:    document.getElementById('dtr-custom-input'),
+    dtrSetBtn:         document.getElementById('dtr-set-btn'),
+    dtrCustomBtn:      document.getElementById('dtr-custom-btn'),
   };
 }
 
@@ -782,6 +796,7 @@ function _handleNext(question) {
   // "Got it" — mark seen, load next
   _recordHistory(question, 'done');
   markSeen(question.id);
+  _incrementDailyDone();
   TG.Haptic.success();
   setTimeout(loadNextCard, 110);
 }
@@ -790,6 +805,7 @@ function _handleSkip(question) {
   _recordHistory(question, 'skipped');
   skipCard(question.id);
   markSeen(question.id);
+  _incrementDailyDone();
   setTimeout(loadNextCard, 110);
 }
 
@@ -797,6 +813,7 @@ function _handleSave(question) {
   _recordHistory(question, 'saved');
   saveCard(question);
   markSeen(question.id);
+  _incrementDailyDone();
   setTimeout(loadNextCard, 110);
 }
 
@@ -1488,6 +1505,116 @@ function startSavedQuiz() {
 }
 
 // ════════════════════════════════════════════════════════════════
+//  DAILY TARGET SETTER
+// ════════════════════════════════════════════════════════════════
+
+const DTR_CIRCUMFERENCE = 2 * Math.PI * 34; // 213.6px  (r=34 in SVG)
+
+/** How many cards has the user actioned today? */
+function _getDailyDoneCount() {
+  const rec = ls_get(LS.DAILY_DONE, { date: '', count: 0 });
+  if (rec.date !== today()) return 0;
+  return rec.count || 0;
+}
+
+/** Increment today's done count by 1 */
+function _incrementDailyDone() {
+  const rec   = ls_get(LS.DAILY_DONE, { date: '', count: 0 });
+  const count = rec.date === today() ? (rec.count || 0) + 1 : 1;
+  ls_set(LS.DAILY_DONE, { date: today(), count });
+}
+
+/** Render the ring, bar, status text and preset highlights */
+function _updateDailyTarget() {
+  const target = ls_get(LS.DAILY_TARGET, 25);
+  const done   = _getDailyDoneCount();
+  const pct    = Math.min(Math.round((done / Math.max(target, 1)) * 100), 100);
+  const complete = done >= target;
+
+  // ── Ring ──────────────────────────────────────────────────
+  const circle = DOM.dtrFillCircle;
+  if (circle) {
+    const offset = DTR_CIRCUMFERENCE - (pct / 100) * DTR_CIRCUMFERENCE;
+    circle.style.strokeDashoffset = offset;
+    circle.classList.toggle('complete', complete);
+  }
+  if (DOM.dtrPct) DOM.dtrPct.textContent = pct + '%';
+
+  // ── Progress bar ──────────────────────────────────────────
+  if (DOM.dtrBarFill) {
+    DOM.dtrBarFill.style.width = pct + '%';
+    DOM.dtrBarFill.classList.toggle('complete', complete);
+  }
+
+  // ── Labels ────────────────────────────────────────────────
+  if (DOM.dtrGoalVal)    DOM.dtrGoalVal.textContent    = target + ' cards';
+  if (DOM.dtrTodayCount) DOM.dtrTodayCount.textContent = done + ' done today';
+
+  if (DOM.dtrStatus) {
+    if (complete) {
+      DOM.dtrStatus.textContent = '🎉 Target reached! Amazing!';
+      DOM.dtrStatus.style.color = 'var(--green)';
+    } else {
+      const left = target - done;
+      DOM.dtrStatus.textContent = left + ' more to go 💪';
+      DOM.dtrStatus.style.color = '';
+    }
+  }
+
+  // ── Highlight active preset button ────────────────────────
+  document.querySelectorAll('.dtr-preset-btn[data-target]').forEach(btn => {
+    btn.classList.toggle('active', parseInt(btn.dataset.target) === target);
+  });
+}
+
+/** Wire up preset buttons, custom input, and set button */
+function _initDailyTarget() {
+  // Preset quick-pick buttons
+  document.querySelectorAll('.dtr-preset-btn[data-target]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = parseInt(btn.dataset.target);
+      ls_set(LS.DAILY_TARGET, t);
+      // Hide custom row if open
+      DOM.dtrCustomRow?.classList.add('hidden');
+      TG.Haptic.select();
+      _updateDailyTarget();
+    });
+  });
+
+  // "Custom" button toggles the input row
+  DOM.dtrCustomBtn?.addEventListener('click', () => {
+    const hidden = DOM.dtrCustomRow?.classList.toggle('hidden');
+    if (!hidden) {
+      DOM.dtrCustomInput?.focus();
+    }
+    TG.Haptic.light();
+  });
+
+  // Set button — reads the custom input
+  DOM.dtrSetBtn?.addEventListener('click', () => {
+    const val = parseInt(DOM.dtrCustomInput?.value || '0');
+    if (val >= 1 && val <= 9999) {
+      ls_set(LS.DAILY_TARGET, val);
+      DOM.dtrCustomRow?.classList.add('hidden');
+      TG.Haptic.success();
+      _updateDailyTarget();
+      showToast('🎯 Daily target set to ' + val + ' cards!');
+    } else {
+      showToast('Enter a number between 1 and 9999');
+      TG.Haptic.error();
+    }
+  });
+
+  // Allow pressing Enter on the input
+  DOM.dtrCustomInput?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') DOM.dtrSetBtn?.click();
+  });
+
+  // Initial render
+  _updateDailyTarget();
+}
+
+// ════════════════════════════════════════════════════════════════
 //  PROGRESS TAB RENDERING
 // ════════════════════════════════════════════════════════════════
 
@@ -1511,6 +1638,9 @@ function renderProgressTab() {
 
   // Refresh user count display
   _initUserCount();
+
+  // Daily target widget
+  _updateDailyTarget();
 
   // Weekly heatmap
   _renderHeatmap();
@@ -2243,6 +2373,7 @@ async function boot() {
   _initButtons();
   _initModeToggle();
   _initGlossarySheet();
+  _initDailyTarget();
 
   // 7. Dismiss splash
   await _delay(300);
