@@ -23,6 +23,28 @@ const TG = (() => {
     // Expand to full height
     twa.expand();
 
+    // ── Apply safe-area insets from Telegram SDK (fixes header overlap with status bar) ──
+    const _applySafeArea = () => {
+      const root = document.documentElement;
+      // twa.safeAreaInset available in TG WebApp v7.4+
+      const top    = twa.safeAreaInset?.top;
+      const bottom = twa.safeAreaInset?.bottom;
+      if (typeof top === 'number' && top > 0) {
+        root.style.setProperty('--tg-safe-top', top + 'px');
+      } else {
+        // Fallback: env() for devices that expose it natively
+        root.style.setProperty('--tg-safe-top', 'env(safe-area-inset-top, 0px)');
+      }
+      if (typeof bottom === 'number' && bottom >= 0) {
+        root.style.setProperty('--tg-safe-bottom', bottom + 'px');
+      }
+    };
+    _applySafeArea();
+    // Re-apply if user rotates or Telegram updates insets
+    twa.onEvent('safeAreaChanged',        _applySafeArea);
+    twa.onEvent('viewportChanged',        _applySafeArea);
+    twa.onEvent('contentSafeAreaChanged', _applySafeArea);
+
     // Apply Telegram's colour theme to CSS variables
     _applyTheme();
 
