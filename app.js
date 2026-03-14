@@ -38,7 +38,7 @@ const CONFIG = {
   //      { "rules": { ".read": true, ".write": true } }
   //   5. Copy the URL shown (e.g. https://agrimets-default-rtdb.firebaseio.com)
   //   6. Paste it below — NO trailing slash
-  FB_URL: 'https://agrimets-a3c9c-default-rtdb.firebaseio.com',   // ← e.g. 'https://agrimets-default-rtdb.firebaseio.com'
+  FB_URL: '',   // ← e.g. 'https://agrimets-default-rtdb.firebaseio.com'
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -2339,6 +2339,1172 @@ function _animateCount(el, target) {
   }
   requestAnimationFrame(tick);
 }
+
+const APP_SHARE_URL  = 'https://t.me/Agrimets_bot';
+const APP_SHARE_TEXT = '🌾 I\'m using AGRIMETS Swipe Cards to prepare for agriculture exams! 📚\n\nJoin me and ace your exams 👇\nhttps://t.me/Agrimets_bot';
+const SHARE_INTERVAL = 200; // Show popup every N cards
+
+function _checkShareMilestone(totalSeen) {
+  if (totalSeen < SHARE_INTERVAL) return;
+  if (totalSeen % SHARE_INTERVAL !== 0) return;
+
+  // Check if we already showed popup for this milestone
+  const lastMilestone = ls_get('dca_last_share_milestone', 0);
+  if (totalSeen <= lastMilestone) return;
+
+  ls_set('dca_last_share_milestone', totalSeen);
+  setTimeout(() => _showSharePopup(totalSeen), 150);
+}
+
+function _showSharePopup(milestone) {
+  const overlay  = document.getElementById('share-popup-overlay');
+  const closeBtn = document.getElementById('share-popup-close');
+  const shareBtn = document.getElementById('share-main-btn');
+  const skipBtn  = document.getElementById('share-skip-btn');
+  const titleEl  = overlay?.querySelector('.share-popup-title');
+  const msgEl    = overlay?.querySelector('.share-popup-msg');
+
+  if (!overlay) return;
+
+  // Update milestone text
+  if (titleEl) titleEl.textContent = `${milestone} Cards Done! 🎉`;
+  if (msgEl)   msgEl.textContent   =
+    `Amazing! You've studied ${milestone} cards. Share AGRIMETS with your friends and help them prepare too!`;
+
+  overlay.classList.remove('hidden');
+  TG.Haptic.success();
+
+  function _closeShare() {
+    overlay.style.opacity    = '0';
+    overlay.style.transition = 'opacity 0.2s ease';
+    setTimeout(() => {
+      overlay.classList.add('hidden');
+      overlay.style.opacity    = '';
+      overlay.style.transition = '';
+    }, 200);
+  }
+
+  closeBtn?.addEventListener('click', _closeShare, { once: true });
+  skipBtn?.addEventListener('click',  _closeShare, { once: true });
+
+  shareBtn?.addEventListener('click', () => {
+    TG.Haptic.medium();
+    _shareApp();
+    setTimeout(_closeShare, 120);
+  }, { once: true });
+}
+
+function _shareApp() {
+  const fullText    = encodeURIComponent(APP_SHARE_TEXT);
+  const waUrl       = `https://wa.me/?text=${fullText}`;
+
+  // Try native share sheet first (Android system chooser includes WhatsApp)
+  if (navigator.share) {
+    navigator.share({
+      title: 'AGRIMETS Swipe Cards',
+      text:  APP_SHARE_TEXT,
+    }).catch(() => window.open(waUrl, '_blank'));
+  } else {
+    // Fallback: open WhatsApp directly
+    window.open(waUrl, '_blank');
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  GLOSSARY
+// ════════════════════════════════════════════════════════════════
+
+const GLOSSARY = {
+  'photoperiodism': 'The response of a plant\'s flowering to the relative lengths of day and night. Plants are classified as short-day, long-day, or day-neutral.',
+  'vernalisation':  'The process by which prolonged cold exposure triggers flowering in plants. Wheat and rye require vernalisation before they can produce flowers.',
+  'apomixis':       'Reproduction in plants without fertilisation, producing seeds genetically identical to the mother. Studied to fix hybrid vigour permanently.',
+  'allelopathy':    'The release of biochemicals by one plant that inhibit or stimulate nearby plants. Used as a natural weed suppression strategy.',
+  'hydroponics':    'A method of growing plants in nutrient-rich water without soil. Roots are directly exposed to mineral solutions for faster growth.',
+  'aeroponics':     'Growing plants with roots suspended in air, misted with nutrients. Uses less water than hydroponics and delivers more oxygen to roots.',
+  'intercropping':  'Growing two or more crops simultaneously on the same field. Improves soil health, reduces pests, and increases overall yield.',
+  'monoculture':    'Farming a single crop species over a large area. Maximises short-term yield but increases vulnerability to pests and soil depletion.',
+  'phenology':      'The study of cyclic seasonal events in plants and animals, such as flowering dates and leaf fall. Critical for timing farm operations.',
+  'stomata':        'Tiny pores on leaf surfaces that regulate gas exchange and water vapour loss. They open and close in response to light and humidity.',
+  'transpiration':  'The process by which water travels through the plant and evaporates from leaves into the atmosphere via stomata.',
+  'germination':    'The process by which a seed sprouts and begins to grow after absorbing water and receiving the right temperature conditions.',
+  'dormancy':       'A state of suspended growth in seeds or buds during unfavourable conditions. Ensures survival until conditions improve.',
+  'tillage':        'The mechanical preparation of soil for cultivation by ploughing or turning. Zero tillage conserves soil structure and moisture.',
+  'mulching':       'Covering soil surface with organic or inorganic material to retain moisture, suppress weeds, and regulate soil temperature.',
+  'fertigation':    'The technique of applying fertilisers directly through an irrigation system. Improves nutrient efficiency and reduces wastage.',
+  'ratooning':      'Allowing a crop to regrow from the root or stubble after harvesting. Common in sugarcane, banana, and rice cultivation.',
+  'lodging':        'The permanent displacement of crop stems from upright position due to wind or weak stems. Causes significant yield losses.',
+  'etiolation':     'Abnormal elongation of plant stems and yellowing caused by insufficient light. The plant stretches towards the nearest light source.',
+  'pedology':       'The branch of science dealing with study of soils in their natural environment, including formation, classification, and mapping.',
+  'humus':          'The dark organic component of soil formed by decomposition of plant and animal matter. Improves structure, water retention, and fertility.',
+  'leaching':       'The downward movement of soluble nutrients through the soil by water. Excessive leaching depletes essential minerals from the root zone.',
+  'salinity':       'The concentration of dissolved salts in soil or water. High soil salinity reduces water availability to plants and damages root cells.',
+  'sodicity':       'A soil condition caused by excess sodium, leading to poor structure, surface crusting, and reduced water infiltration capacity.',
+  'laterite':       'A highly weathered soil rich in iron and aluminium oxides, common in tropical climates. Hardens on exposure to air; poor in nutrients.',
+  'mycorrhizae':    'Symbiotic fungi that colonise plant roots, extending the root surface area and improving uptake of phosphorus and water.',
+  'rhizobium':      'Nitrogen-fixing bacteria in root nodules of legumes. They convert atmospheric nitrogen into ammonia, reducing fertiliser needs.',
+  'erosion':        'The wearing away of topsoil by wind or water. One of the leading causes of land degradation and loss of agricultural productivity.',
+  'compaction':     'The compression of soil particles reducing pore space. It limits root penetration, water infiltration, and air circulation.',
+  'waterlogging':   'Saturation of soil with water depleting oxygen from the root zone. Causes anaerobic conditions leading to root death in most crops.',
+  'evapotranspiration': 'The combined water loss by evaporation from soil and transpiration from plants. Key for calculating crop water requirements.',
+  'aquifer':        'An underground layer of permeable rock that stores groundwater. Over-extraction leads to permanent water table depletion.',
+  'watershed':      'The total land area draining into a common river or water body. Critical for flood control, recharge, and irrigation planning.',
+  'IPM':            'Integrated Pest Management — combining biological, cultural, physical, and chemical tools to minimise pest damage and input costs.',
+  'biocontrol':     'Using living organisms such as predatory insects or beneficial pathogens to control pests, reducing dependence on chemicals.',
+  'nematode':       'Microscopic roundworms in soil. Some are beneficial predators of pests; others are plant parasites causing serious root damage.',
+  'pathogen':       'Any organism — fungus, bacterium, virus, or parasite — that causes disease in plants or animals.',
+  'ruminant':       'A mammal that digests plant food through a multi-chambered stomach. Cattle, buffalo, sheep, and goats are ruminants.',
+  'monogastric':    'An animal with a single-chambered stomach, such as pigs and poultry. They cannot digest cellulose efficiently.',
+  'zoonosis':       'A disease naturally transmissible from animals to humans. Examples include rabies, avian influenza, and brucellosis.',
+  'parturition':    'The process of giving birth in animals — calving in cattle, farrowing in pigs, lambing in sheep, kidding in goats.',
+  'lactation':      'The production and secretion of milk by mammary glands following parturition. Influenced by breed, nutrition, and health.',
+  'mastitis':       'Inflammation of the mammary gland in dairy animals, usually caused by bacterial infection. Reduces milk yield and quality.',
+  'FCR':            'Feed Conversion Ratio — weight of feed consumed per unit of body weight gained. Lower FCR means better feed efficiency.',
+  'aquaculture':    'The controlled farming of fish, shellfish, algae, or other aquatic organisms. The world\'s fastest-growing food production sector.',
+  'eutrophication': 'Excessive enrichment of water with nutrients causing algal blooms and oxygen depletion. Primarily caused by agricultural runoff.',
+  'biomass':        'The total mass of all living organisms in a given area. In aquaculture, it refers to total weight of fish being produced.',
+  'MSP':            'Minimum Support Price — the guaranteed price set by the Indian government at which it procures crops from farmers.',
+  'procurement':    'The process by which government agencies purchase food grains from farmers at MSP for the central food security buffer stock.',
+  'subsidies':      'Financial support given by the government to reduce production costs for farmers on inputs like fertilisers and seeds.',
+  'PDS':            'Public Distribution System — India\'s food security network supplying subsidised grains to eligible poor households.',
+  'NABARD':         'National Bank for Agriculture and Rural Development — India\'s apex bank for agricultural credit and rural development.',
+  'cooperatives':   'Farmer-owned organisations that pool resources for buying inputs, processing produce, and accessing credit on better terms.',
+  'FPO':            'Farmer Producer Organisation — a company owned by farmers to improve collective bargaining power and market access.',
+  'biodiversity':   'The variety of life on Earth encompassing genes, species, and ecosystems. Essential for food security and climate resilience.',
+  'agroforestry':   'A land-use system integrating trees with crops or livestock. Improves soil health, biodiversity, income, and microclimate.',
+  'deforestation':  'The permanent clearing of forest cover for agriculture or development. Accelerates soil erosion and destroys biodiversity.',
+  'desertification':'The degradation of fertile dryland into desert caused by drought, overgrazing, or poor land management.',
+  'methane':        'A potent greenhouse gas released by ruminant digestion, rice paddies, and manure. About 25–80× more warming than CO₂.',
+  'GMO':            'Genetically Modified Organism — a plant or animal whose DNA has been altered using genetic engineering tools.',
+  'hybrid seed':    'Seed from controlled cross-pollination of two selected parent varieties. Higher yield and vigour but seeds cannot be saved.',
+  'biofortification': 'Increasing the nutritional content of crops through breeding or biotechnology. Golden Rice with vitamin A is a key example.',
+  'precision farming': 'Using GPS, sensors, drones, and analytics to apply inputs only where and when needed for maximum efficiency.',
+  'remote sensing': 'Acquiring information about crops or soil from a distance using satellite or aerial imagery. Used to detect crop stress.',
+  'GIS':            'Geographic Information System — software capturing and analysing spatial data for soil mapping and field planning.',
+  'GDP':            'Gross Domestic Product — the total monetary value of all goods and services produced in a country in a time period.',
+  'inflation':      'A sustained rise in the general price level of goods and services, reducing the purchasing power of money.',
+  'repo rate':      'The rate at which the RBI lends to commercial banks. Raising it curbs inflation; reducing it stimulates growth.',
+  'SEBI':           'Securities and Exchange Board of India — the statutory regulator of India\'s capital and securities markets.',
+  'GST':            'Goods and Services Tax — India\'s unified indirect tax applied on the supply of goods and services across the country.',
+  'disinvestment':  'The government reducing its equity stake in public sector enterprises by selling shares to private investors.',
+  'Kisan Credit Card': 'A revolving credit facility for Indian farmers for seeds, fertilisers, and post-harvest expenses at subsidised rates.',
+};
+
+function _linkGlossary(text) {
+  if (!text) return '';
+  let html = _escHtml(text);
+  const keys = Object.keys(GLOSSARY).sort((a, b) => b.length - a.length);
+  keys.forEach(term => {
+    const esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re  = new RegExp(`(?<![\\w-])(${esc})(?![\\w-])`, 'gi');
+    html = html.replace(re, m =>
+      `<span class="glossary-term" data-term="${_escHtml(term.toLowerCase())}">${m}</span>`
+    );
+  });
+  return html;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CRAM MODE — scrollable cheat-sheet
+// ════════════════════════════════════════════════════════════════
+
+function _renderCramView() {
+  const container = DOM.cramView;
+  if (!container) return;
+
+  container.innerHTML = '';
+  container.classList.remove('hidden');
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'cram-header';
+  header.innerHTML = `
+    <span class="cram-header-count">${State.dailyCards.length} questions</span>
+    <span class="cram-header-hint">Tap a card to reveal the answer</span>
+  `;
+  container.appendChild(header);
+
+  // Render every Q&A row
+  State.dailyCards.forEach((q, i) => {
+    const item = document.createElement('div');
+    item.className = 'cram-item';
+    item.style.setProperty('--ci', Math.min(i, 40)); // cap delay so late items don't wait forever
+
+    const cat = q.category
+      ? `<span class="cram-category">${_escHtml(q.category)}</span>` : '';
+
+    item.innerHTML = `
+      ${cat}
+      <div class="cram-question">
+        <span class="cram-num">Q${i + 1}</span>
+        <span class="cram-question-text">${_linkGlossary(q.question)}</span>
+      </div>
+      <div class="cram-answer">${_escHtml(q.answer)}</div>
+    `;
+
+    item.addEventListener('click', () => {
+      item.classList.toggle('cram-revealed');
+      TG.Haptic.light();
+    });
+
+    container.appendChild(item);
+  });
+
+  const footer = document.createElement('div');
+  footer.className = 'cram-footer';
+  footer.innerHTML = `<p class="cram-footer-tip">Tap any card to reveal / hide the answer</p>`;
+  container.appendChild(footer);
+}
+
+// ── Mode toggle ───────────────────────────────────────────────
+function _initModeToggle() {
+  const swipeBtn = document.getElementById('mode-btn-swipe');
+  const cramBtn  = document.getElementById('mode-btn-cram');
+  if (!swipeBtn || !cramBtn) return;
+
+  function _setMode(mode) {
+    State.cramMode = (mode === 'cram');
+    swipeBtn.classList.toggle('active',  !State.cramMode);
+    cramBtn.classList.toggle('active',    State.cramMode);
+    TG.Haptic.select();
+  }
+
+  swipeBtn.addEventListener('click', () => _setMode('swipe'));
+  cramBtn.addEventListener('click',  () => _setMode('cram'));
+}
+
+// ── Glossary sheet ────────────────────────────────────────────
+function _initGlossarySheet() {
+  const overlay  = document.getElementById('glossary-overlay');
+  const termEl   = document.getElementById('glossary-term-title');
+  const defEl    = document.getElementById('glossary-definition');
+  const closeBtn = document.getElementById('glossary-close');
+  if (!overlay) return;
+
+  document.addEventListener('click', (e) => {
+    const span = e.target.closest('.glossary-term');
+    if (!span) return;
+    e.stopPropagation();
+    const key = span.dataset.term;
+    const def = GLOSSARY[key] ||
+      Object.entries(GLOSSARY).find(([k]) => k.toLowerCase() === key)?.[1];
+    if (!def) return;
+    termEl.textContent = span.textContent;
+    defEl.textContent  = def;
+    overlay.classList.remove('hidden');
+    requestAnimationFrame(() => overlay.classList.add('open'));
+    TG.Haptic.light();
+  });
+
+  function _close() {
+    overlay.classList.remove('open');
+    setTimeout(() => overlay.classList.add('hidden'), 300);
+    TG.Haptic.select();
+  }
+
+  closeBtn?.addEventListener('click', _close);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) _close(); });
+
+  const sheet = document.getElementById('glossary-sheet');
+  let _sy = 0;
+  sheet?.addEventListener('touchstart', e => { _sy = e.touches[0].clientY; }, { passive: true });
+  sheet?.addEventListener('touchend',   e => {
+    if (e.changedTouches[0].clientY - _sy > 55) _close();
+  }, { passive: true });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  MOCK TEST ENGINE  — scheduled unlocks + dynamic categories
+//
+//  SHEET TAB : "MockTests"
+//  COLUMNS   : id | category | test_no | question |
+//              opt_a | opt_b | opt_c | opt_d | opt_e | answer
+//
+//  SCHEDULE  :
+//   • Every day   8 PM  → "Test Series"  (next sequential test unlocks)
+//   • Every day   9 PM  → "NIMRAJ Sunday" (next sequential test unlocks)
+//   • Every Sunday 10PM → Sunday Mega Test (60 random, never repeat)
+//
+//  To change unlock times → edit MOCK_SCHEDULE below.
+//  To add a new daily-unlock category → add one entry to MOCK_SCHEDULE.
+//  All other categories from sheet appear automatically with no schedule.
+// ════════════════════════════════════════════════════════════════
+
+// ── Schedule config — only categories listed here get daily unlock ──
+// catNorm  : lowercase version of the "category" column value in sheet
+// unlockHour: 24h integer (20 = 8 PM, 21 = 9 PM)
+const MOCK_SCHEDULE = [
+  { catNorm: 'test series',   unlockHour: 20 },
+  { catNorm: 'nimraj sunday', unlockHour: 21 },
+];
+const SUNDAY_MEGA_HOUR  = 22;   // 10 PM every Sunday
+const SUNDAY_MEGA_COUNT = 60;   // questions per Sunday Mega Test
+
+// ── Emoji auto-assign by category name keyword ───────────────
+const _CAT_EMOJI_MAP = [
+  ['agronomy','🌾'],['soil','🌱'],['horticulture','🍎'],
+  ['fishery','🐟'],['fish','🐟'],['forestry','🌲'],
+  ['seed','🌰'],['animal','🐄'],['dairy','🥛'],
+  ['poultry','🐓'],['icar','🏛'],['extension','📡'],
+  ['economics','📈'],['economy','📈'],['nimraj','☀️'],
+  ['sunday','📅'],['series','📋'],['special','⭐'],
+  ['full','📝'],['agri','🌿'],
+];
+function _catEmoji(name) {
+  const lower = name.toLowerCase();
+  for (const [kw, em] of _CAT_EMOJI_MAP) if (lower.includes(kw)) return em;
+  return '📋';
+}
+
+let MockData = {
+  allRows:           [],
+  currentCategory:   null,
+  testList:          [],
+  currentTest:       null,
+  questions:         [],
+  currentIndex:      0,
+  history:           [],
+  timerInterval:     null,
+  countdownInterval: null,  // live countdown on category screen
+};
+
+// ── Show/hide mock screens ────────────────────────────────────
+function _mockShow(id) {
+  ['subject-picker','mock-category-view','mock-list-view',
+   'mock-arena','mock-results'].forEach(v => {
+    document.getElementById(v)?.classList.toggle('hidden', v !== id);
+  });
+  // Stop countdown when leaving category screen
+  if (id !== 'mock-category-view') {
+    clearInterval(MockData.countdownInterval);
+    MockData.countdownInterval = null;
+  }
+}
+
+// ────────────────────────────────────────────────────────────
+//  SCHEDULE HELPERS
+// ────────────────────────────────────────────────────────────
+
+/** Seconds until a given hour today (0 if already past) */
+function _secsUntilHour(h) {
+  const now = new Date();
+  const t   = new Date(now);
+  t.setHours(h, 0, 0, 0);
+  return t <= now ? 0 : Math.floor((t - now) / 1000);
+}
+
+/** Format seconds as "2h 04m 30s" / "04m 30s" / "30s" */
+function _fmtCountdown(s) {
+  if (s <= 0) return 'Unlocking…';
+  const h = Math.floor(s / 3600);
+  const m = Math.floor((s % 3600) / 60);
+  const sec = s % 60;
+  if (h > 0) return `${h}h ${String(m).padStart(2,'0')}m ${String(sec).padStart(2,'0')}s`;
+  if (m > 0) return `${m}m ${String(sec).padStart(2,'0')}s`;
+  return `${sec}s`;
+}
+
+/**
+ * Returns "today's" test_no for a scheduled category.
+ * Advances by one each calendar day.
+ * Returns NULL when all available tests have been shown already
+ * (no cycling — ensures no phantom countdown when sheet is empty).
+ */
+function _getDailyTestNo(catNorm, availableTestNos) {
+  if (!availableTestNos || availableTestNos.length === 0) return null;
+
+  const key      = 'dca_daily_' + catNorm.replace(/\s+/g,'_');
+  const stored   = ls_get(key, { date: '', testNo: null, used: [] });
+  const todayStr = today();
+
+  // Already assigned today — return it
+  if (stored.date === todayStr && stored.testNo) return stored.testNo;
+
+  // Sort numerically/alphabetically
+  const sorted = availableTestNos.slice().sort((a, b) => {
+    const na = parseFloat(a), nb = parseFloat(b);
+    return !isNaN(na) && !isNaN(nb) ? na - nb : String(a).localeCompare(String(b));
+  });
+
+  const used = Array.isArray(stored.used) ? stored.used : [];
+  const next = sorted.find(t => !used.includes(t));
+
+  // All tests used — no cycling, no countdown
+  if (!next) return null;
+
+  ls_set(key, { date: todayStr, testNo: next, used: [...used, next] });
+  return next;
+}
+
+/**
+ * Returns 60 questions for Sunday Mega Test, never repeating
+ * across Sundays. Uses question id (or question text as fallback).
+ * Resets automatically when all questions have been used.
+ */
+function _getSundayMegaQuestions() {
+  const usedKey = 'dca_sunday_used';
+  const usedArr = ls_get(usedKey, []);
+  const usedSet = new Set(usedArr);
+
+  const pool = MockData.allRows.filter(r => !usedSet.has(r.id || r.question));
+  const src  = pool.length >= SUNDAY_MEGA_COUNT ? pool : MockData.allRows;
+  if (pool.length < SUNDAY_MEGA_COUNT) ls_set(usedKey, []); // reset cycle
+
+  const chosen = shuffle([...src]).slice(0, SUNDAY_MEGA_COUNT);
+  ls_set(usedKey, [...(pool.length >= SUNDAY_MEGA_COUNT ? usedArr : []),
+                   ...chosen.map(r => r.id || r.question)]);
+  return chosen;
+}
+
+// ────────────────────────────────────────────────────────────
+//  OPEN CATEGORY SCREEN
+// ────────────────────────────────────────────────────────────
+async function _openMockCategories() {
+  TG.Haptic.medium();
+  _mockShow('mock-category-view');
+  // Back → subject picker
+  TG.pushBack(() => {
+    showSubjectPicker();
+  });
+
+  const catListEl = document.getElementById('mock-category-list');
+  const subEl     = document.getElementById('mock-cat-sub');
+  if (catListEl) catListEl.innerHTML = '<div class="mock-list-loading">⏳ Loading…</div>';
+
+  // Fetch once; cleared by Update button
+  if (MockData.allRows.length === 0) {
+    try {
+      const url = `https://opensheet.elk.sh/${CONFIG.SPREADSHEET_ID}/MockTests`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const raw = await res.json();
+      if (!Array.isArray(raw) || raw.length === 0) throw new Error('Empty');
+      MockData.allRows = raw.map(r => {
+        const n = {};
+        Object.keys(r).forEach(k => {
+          n[k.toLowerCase().trim()] = String(r[k] ?? '').trim();
+        });
+        return n;
+      });
+    } catch (err) {
+      console.error('[Mock]', err);
+      if (catListEl) catListEl.innerHTML =
+        `<div class="mock-list-loading" style="color:var(--red)">
+           ❌ Could not load tests.<br>
+           <small>Tab must be named <strong>MockTests</strong>,
+           shared as "Anyone with link – Viewer".</small>
+         </div>`;
+      return;
+    }
+  }
+
+  // Build category map from sheet rows
+  const countByNorm = {}, normToRaw = {}, testsByNorm = {};
+  MockData.allRows.forEach(r => {
+    const raw  = (r.category || 'Uncategorised').trim();
+    const norm = raw.toLowerCase();
+    countByNorm[norm] = (countByNorm[norm] || 0) + 1;
+    if (!normToRaw[norm]) normToRaw[norm] = raw;
+    if (!testsByNorm[norm]) testsByNorm[norm] = new Set();
+    testsByNorm[norm].add(r.test_no || '1');
+  });
+
+  const cats = Object.keys(countByNorm)
+    .sort((a, b) => a.localeCompare(b))
+    .map(norm => ({
+      key:     normToRaw[norm],
+      norm,
+      count:   countByNorm[norm],
+      testNos: [...testsByNorm[norm]],
+    }));
+
+  if (subEl) subEl.textContent =
+    `${cats.length} categor${cats.length !== 1 ? 'ies' : 'y'} · ${MockData.allRows.length} questions`;
+
+  _renderMockCategories(cats);
+  _startCategoryCountdown(cats);
+}
+
+// ────────────────────────────────────────────────────────────
+//  RENDER CATEGORY SCREEN
+// ────────────────────────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+//  SUNDAY MEGA BANNER  — lives on the home screen
+//  Visible every day: shows "Next Sunday" countdown on weekdays,
+//  shows live countdown on Sunday before 10 PM,
+//  goes LIVE on Sunday after 10 PM.
+// ════════════════════════════════════════════════════════════════
+
+let _sundayBannerInterval = null;
+
+function _renderSundayMegaBanner() {
+  const banner = document.getElementById('sunday-mega-banner');
+  if (!banner) return;
+
+  const now      = new Date();
+  const isSunday = now.getDay() === 0;
+  const hour     = now.getHours();
+  const isLive   = isSunday && hour >= SUNDAY_MEGA_HOUR;
+
+  banner.classList.remove('hidden');
+
+  if (isLive) {
+    banner.className = 'sunday-mega-banner smb-live';
+    banner.onclick   = _launchSundayMega;
+    banner.innerHTML = `
+      <div class="smb-left">
+        <span class="smb-trophy">🏆</span>
+        <div class="smb-body">
+          <div class="smb-title">Sunday Mega Test</div>
+          <div class="smb-meta">${SUNDAY_MEGA_COUNT} Qs · All topics · −0.25</div>
+        </div>
+      </div>
+      <div class="smb-right">
+        <span class="smb-live-badge">LIVE</span>
+        <span class="smb-chevron">›</span>
+      </div>`;
+  } else {
+    banner.className = 'sunday-mega-banner smb-locked';
+    banner.onclick   = null;
+
+    // Seconds to next Sunday 10 PM
+    let secsLeft;
+    if (isSunday && hour < SUNDAY_MEGA_HOUR) {
+      secsLeft = _secsUntilHour(SUNDAY_MEGA_HOUR);
+    } else {
+      const daysUntil = isSunday ? 7 : (7 - now.getDay()) % 7 || 7;
+      const nextSun   = new Date(now);
+      nextSun.setDate(now.getDate() + daysUntil);
+      nextSun.setHours(SUNDAY_MEGA_HOUR, 0, 0, 0);
+      secsLeft = Math.max(0, Math.floor((nextSun - now) / 1000));
+    }
+
+    const daysLeft = Math.floor(secsLeft / 86400);
+    const label    = daysLeft >= 2 ? `${daysLeft}d` : _fmtCountdown(secsLeft);
+
+    banner.innerHTML = `
+      <div class="smb-left">
+        <span class="smb-trophy smb-trophy-dim">🏆</span>
+        <div class="smb-body">
+          <div class="smb-title">Sunday Mega Test</div>
+          <div class="smb-meta">${SUNDAY_MEGA_COUNT} Qs · All topics · −0.25</div>
+        </div>
+      </div>
+      <div class="smb-right">
+        <span class="smb-countdown-badge" id="smb-countdown-text">${label}</span>
+        <span class="smb-lock">🔒</span>
+      </div>`;
+  }
+}
+
+async function _launchSundayMega() {
+  TG.Haptic.medium();
+  // If mock data not yet loaded, fetch it first
+  if (MockData.allRows.length === 0) {
+    showToast('⏳ Loading questions…', 1500);
+    try {
+      const url = `https://opensheet.elk.sh/${CONFIG.SPREADSHEET_ID}/MockTests`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const raw = await res.json();
+      MockData.allRows = raw.map(r => {
+        const n = {};
+        Object.keys(r).forEach(k => {
+          n[k.toLowerCase().trim()] = String(r[k] ?? '').trim();
+        });
+        return n;
+      });
+    } catch (err) {
+      showToast('❌ Could not load questions — check connection', 3000);
+      TG.Haptic.error();
+      return;
+    }
+  }
+  const qs = _getSundayMegaQuestions();
+  _startMockTest({ testNo: 'Sunday', name: 'Sunday Mega Test', questions: qs });
+}
+
+function _initSundayMegaBanner() {
+  // Initial render
+  _renderSundayMegaBanner();
+
+  // Tick every second to update the countdown text
+  clearInterval(_sundayBannerInterval);
+  _sundayBannerInterval = setInterval(() => {
+    const banner = document.getElementById('sunday-mega-banner');
+    if (!banner) return;
+
+    const now      = new Date();
+    const isSunday = now.getDay() === 0;
+    const hour     = now.getHours();
+    const isLive   = isSunday && hour >= SUNDAY_MEGA_HOUR;
+
+    if (isLive && !banner.classList.contains('smb-live')) {
+      // Just flipped live — full re-render
+      _renderSundayMegaBanner();
+      return;
+    }
+
+    if (!isLive) {
+      const ctEl = document.getElementById('smb-countdown-text');
+      if (!ctEl) return;
+
+      let secsLeft;
+      if (isSunday && hour < SUNDAY_MEGA_HOUR) {
+        secsLeft = _secsUntilHour(SUNDAY_MEGA_HOUR);
+      } else {
+        const daysUntil = isSunday ? 7 : (7 - now.getDay()) % 7 || 7;
+        const nextSun   = new Date(now);
+        nextSun.setDate(now.getDate() + daysUntil);
+        nextSun.setHours(SUNDAY_MEGA_HOUR, 0, 0, 0);
+        secsLeft = Math.max(0, Math.floor((nextSun - now) / 1000));
+      }
+      const daysLeft = Math.floor(secsLeft / 86400);
+      ctEl.textContent = daysLeft >= 2 ? `${daysLeft}d` : _fmtCountdown(secsLeft);
+    }
+  }, 1000);
+}
+
+function _renderMockCategories(cats) {
+  const listEl = document.getElementById('mock-category-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  const hour = new Date().getHours();
+
+  // ── Section 1: TODAY'S SCHEDULE (daily tests only) ──────────
+  const schedItems = [];
+
+  MOCK_SCHEDULE.forEach(cfg => {
+    const cat = cats.find(c => c.norm === cfg.catNorm);
+    if (!cat) return;
+
+    const testNo = _getDailyTestNo(cat.norm, cat.testNos);
+    // No test available for today in this category → skip entirely, no countdown
+    if (!testNo) return;
+
+    const rows = MockData.allRows.filter(r =>
+      (r.category || '').trim().toLowerCase() === cat.norm &&
+      (r.test_no || '1') === testNo
+    );
+    // No rows found for this test_no → sheet doesn't have it yet → skip
+    if (rows.length === 0) return;
+
+    const isUnlocked = hour >= cfg.unlockHour;
+    const secsLeft   = _secsUntilHour(cfg.unlockHour);
+
+    schedItems.push({
+      type: 'daily', cat, testNo, rows, isUnlocked, secsLeft,
+      unlockHour: cfg.unlockHour,
+      schedId: 'sched_' + cat.norm.replace(/\s+/g,'_'),
+    });
+  });
+
+  // NOTE: Sunday Mega is no longer here — it lives on the home screen banner
+
+  if (schedItems.length > 0) {
+    // Section label
+    listEl.appendChild(_mockSectionLabel("📌 Today's Tests"));
+
+    schedItems.forEach(item => {
+      const card = document.createElement('div');
+      card.id        = item.schedId;
+      card.className = 'mock-sched-card' + (item.isUnlocked ? ' unlocked' : ' locked');
+
+      if (item.type === 'sunday') {
+        card.innerHTML = _schedCardHTML({
+          isUnlocked: item.isUnlocked,
+          name:       '🏆 Sunday Mega Test',
+          meta:       `${SUNDAY_MEGA_COUNT} random questions · All categories · −0.25`,
+          secsLeft:   item.secsLeft,
+          schedId:    item.schedId,
+        });
+        if (item.isUnlocked) {
+          card.addEventListener('click', () => {
+            TG.Haptic.medium();
+            const qs = _getSundayMegaQuestions();
+            _startMockTest({ testNo: 'Sunday', name: 'Sunday Mega Test', questions: qs });
+          });
+        }
+      } else {
+        const label = `${item.cat.key} — Test ${item.testNo}`;
+        card.innerHTML = _schedCardHTML({
+          isUnlocked: item.isUnlocked,
+          name:       label,
+          meta:       `${item.rows.length} questions · −0.25 negative marking`,
+          secsLeft:   item.secsLeft,
+          schedId:    item.schedId,
+        });
+        if (item.isUnlocked) {
+          card.addEventListener('click', () => {
+            _startMockTest({ testNo: item.testNo, name: label, questions: item.rows });
+          });
+        }
+      }
+      listEl.appendChild(card);
+    });
+
+    listEl.appendChild(_mockSectionLabel('📚 All Categories'));
+  }
+
+  // ── Section 2: Grand Test (always) ────────────────────────
+  const grandCard = document.createElement('div');
+  grandCard.className = 'mock-cat-card grand';
+  grandCard.innerHTML = `
+    <div class="mock-cat-icon">🏆</div>
+    <div class="mock-cat-info">
+      <div class="mock-cat-name">Grand Test</div>
+      <div class="mock-cat-meta">100 random questions from all categories · −0.25</div>
+    </div>
+    <span class="mock-cat-arrow">›</span>`;
+  grandCard.addEventListener('click', () => {
+    TG.Haptic.medium();
+    const pool = shuffle([...MockData.allRows]).slice(0, 100);
+    _startMockTest({ testNo: 'Grand', name: `Grand Test (${pool.length} Qs)`, questions: pool });
+  });
+  listEl.appendChild(grandCard);
+
+  // ── Section 3: All categories from sheet ──────────────────
+  cats.forEach((cat, i) => {
+    const card = document.createElement('div');
+    card.className = 'mock-cat-card';
+    card.style.animationDelay = ((i + 1) * 0.05) + 's';
+    card.innerHTML = `
+      <div class="mock-cat-icon">${_catEmoji(cat.key)}</div>
+      <div class="mock-cat-info">
+        <div class="mock-cat-name">${_escHtml(cat.key)}</div>
+        <div class="mock-cat-meta">${cat.count} questions · ${cat.testNos.length} test${cat.testNos.length !== 1 ? 's' : ''}</div>
+      </div>
+      <span class="mock-cat-arrow">›</span>`;
+    card.addEventListener('click', () => _openCategoryTests(cat));
+    listEl.appendChild(card);
+  });
+}
+
+// ── Build schedule card inner HTML ────────────────────────────
+function _schedCardHTML({ isUnlocked, name, meta, secsLeft, schedId }) {
+  const badge = isUnlocked
+    ? `<div class="sched-badge badge-live">🟢 LIVE</div>`
+    : `<div class="sched-badge badge-lock">🔒</div>`;
+
+  const status = isUnlocked
+    ? `<div class="sched-live-label">Tap to start now!</div>`
+    : `<div class="sched-countdown" data-sched-id="${schedId}">Unlocks in ${_fmtCountdown(secsLeft)}</div>`;
+
+  return `
+    ${badge}
+    <div class="sched-info">
+      <div class="sched-name">${_escHtml(name)}</div>
+      <div class="sched-meta">${_escHtml(meta)}</div>
+      ${status}
+    </div>
+    <span class="sched-arrow">${isUnlocked ? '›' : '⏳'}</span>`;
+}
+
+// ── Section divider label ─────────────────────────────────────
+function _mockSectionLabel(text) {
+  const el = document.createElement('div');
+  el.className   = 'mock-section-label';
+  el.textContent = text;
+  return el;
+}
+
+// ────────────────────────────────────────────────────────────
+//  LIVE COUNTDOWN TICKER
+// ────────────────────────────────────────────────────────────
+function _startCategoryCountdown(cats) {
+  clearInterval(MockData.countdownInterval);
+
+  MockData.countdownInterval = setInterval(() => {
+    const listEl = document.getElementById('mock-category-list');
+    if (!listEl) { clearInterval(MockData.countdownInterval); return; }
+
+    const hour = new Date().getHours();
+    let needsRebuild = false;
+
+    listEl.querySelectorAll('.sched-countdown[data-sched-id]').forEach(el => {
+      const id   = el.dataset.schedId;
+      const norm = id.replace('sched_', '').replace(/_/g, ' ');
+      const unlockHour = MOCK_SCHEDULE.find(c => c.catNorm === norm)?.unlockHour;
+      if (unlockHour === undefined) return;
+
+      const secs = _secsUntilHour(unlockHour);
+      if (secs <= 0) { needsRebuild = true; return; }
+      el.textContent = `Unlocks in ${_fmtCountdown(secs)}`;
+    });
+
+    if (needsRebuild) {
+      clearInterval(MockData.countdownInterval);
+      _openMockCategories(); // re-render to show LIVE badge
+    }
+  }, 1000);
+}
+
+// ────────────────────────────────────────────────────────────
+//  OPEN TEST LIST FOR A CATEGORY
+// ────────────────────────────────────────────────────────────
+function _openCategoryTests(cat) {
+  TG.Haptic.medium();
+  MockData.currentCategory = cat;
+
+  const schedCfg  = MOCK_SCHEDULE.find(c => c.catNorm === cat.norm);
+  const todayStr  = today();
+  const hour      = new Date().getHours();
+
+  // ── Build the set of test_nos that belong to PAST DAYS only ──
+  // Rule: today's assigned test is NOT shown in the category list —
+  // it lives on the Mock Tests home screen (countdown / LIVE card).
+  // Only after midnight does it move into the category list.
+  let allowedTestNos = null; // null = unscheduled, show everything
+
+  if (schedCfg) {
+    const key    = 'dca_daily_' + cat.norm.replace(/\s+/g,'_');
+    const stored = ls_get(key, { date: '', testNo: null, used: [] });
+    const usedArr = Array.isArray(stored.used) ? stored.used : [];
+
+    let pastTests;
+    if (stored.date === todayStr && stored.testNo) {
+      // stored.used already contains today's testNo — exclude it
+      pastTests = usedArr.filter(t => t !== stored.testNo);
+    } else {
+      // Today's test not yet assigned — everything in used[] is from past days
+      pastTests = usedArr;
+    }
+    allowedTestNos = new Set(pastTests);
+  }
+
+  // ── Filter rows ──────────────────────────────────────────────
+  const rows = MockData.allRows.filter(r => {
+    if ((r.category || 'Uncategorised').trim().toLowerCase() !== cat.norm) return false;
+    if (allowedTestNos !== null) return allowedTestNos.has(r.test_no || '1');
+    return true;
+  });
+
+  const titleEl = document.querySelector('#mock-list-view .mock-list-title');
+  const subEl   = document.getElementById('mock-list-sub');
+  const listEl  = document.getElementById('mock-test-list');
+  if (titleEl) titleEl.textContent = cat.key;
+
+  // ── Empty state for scheduled category ───────────────────────
+  if (schedCfg && rows.length === 0) {
+    _mockShow('mock-list-view');
+    TG.pushBack(() => { _mockShow('mock-category-view'); TG.replaceBack(() => { showSubjectPicker(); }); });
+
+    // Work out WHY it's empty and show the right message
+    const todayTestNo = _getDailyTestNoReadOnly(cat.norm);
+    const hasTodayTest = todayTestNo !== null &&
+      MockData.allRows.some(r =>
+        (r.category || '').trim().toLowerCase() === cat.norm &&
+        (r.test_no || '1') === todayTestNo
+      );
+
+    let msg, subMsg;
+    if (hasTodayTest) {
+      const unlockH  = schedCfg.unlockHour;
+      const timeStr  = unlockH === 20 ? '8 PM' : unlockH === 21 ? '9 PM' :
+                       unlockH === 22 ? '10 PM' : `${unlockH}:00`;
+      const isLive   = hour >= unlockH;
+      if (isLive) {
+        msg    = `Today's test is LIVE on the Mock Tests screen!`;
+        subMsg = `It will appear here from tomorrow onwards.`;
+      } else {
+        msg    = `Today's test unlocks at ${timeStr}.`;
+        subMsg = `It will appear here from tomorrow. Check the Mock Tests home for the countdown.`;
+      }
+    } else {
+      msg    = `Will be added soon!`;
+      subMsg = `No test is scheduled for today. Check back tomorrow.`;
+    }
+
+    if (subEl)  subEl.textContent = hasTodayTest ? 'Unlocks today' : 'Coming soon';
+    if (listEl) listEl.innerHTML = `
+      <div class="mock-empty-state">
+        <div class="mock-empty-icon">${hasTodayTest ? '⏳' : '📋'}</div>
+        <div class="mock-empty-title">${_escHtml(msg)}</div>
+        <div class="mock-empty-sub">${_escHtml(subMsg)}</div>
+      </div>`;
+    return;
+  }
+
+  // ── Build test list from allowed rows ────────────────────────
+  const groups = {};
+  rows.forEach(r => {
+    const t = r.test_no || '1';
+    if (!groups[t]) groups[t] = [];
+    groups[t].push(r);
+  });
+
+  MockData.testList = Object.entries(groups)
+    .sort(([a], [b]) => {
+      const na = parseFloat(a), nb = parseFloat(b);
+      return !isNaN(na) && !isNaN(nb) ? na - nb : a.localeCompare(b);
+    })
+    .map(([testNo, questions]) => ({
+      testNo,
+      name: `${cat.key} — Test ${testNo}`,
+      questions,
+    }));
+
+  if (subEl) subEl.textContent =
+    `${MockData.testList.length} test${MockData.testList.length !== 1 ? 's' : ''} available`;
+
+  _mockShow('mock-list-view');
+  TG.pushBack(() => { _mockShow('mock-category-view'); TG.replaceBack(() => { showSubjectPicker(); }); });
+  _renderMockTestList();
+}
+
+/**
+ * Read-only version of _getDailyTestNo — checks what test is
+ * assigned today WITHOUT advancing the counter or writing to storage.
+ * Used only to inspect the current state for UI messages.
+ */
+function _getDailyTestNoReadOnly(catNorm) {
+  const key     = 'dca_daily_' + catNorm.replace(/\s+/g,'_');
+  const stored  = ls_get(key, { date: '', testNo: null, used: [] });
+  if (stored.date === today() && stored.testNo) return stored.testNo;
+  return null; // not yet assigned today (or already assigned but different date)
+}
+
+function _renderMockTestList() {
+  const listEl = document.getElementById('mock-test-list');
+  if (!listEl) return;
+  listEl.innerHTML = '';
+
+  MockData.testList.forEach((test, i) => {
+    const card = document.createElement('div');
+    card.className = 'mock-test-card';
+    card.style.animationDelay = (i * 0.04) + 's';
+    card.innerHTML = `
+      <div class="mock-test-num">${test.testNo}</div>
+      <div class="mock-test-info">
+        <div class="mock-test-name">${_escHtml(test.name)}</div>
+        <div class="mock-test-meta">${test.questions.length} questions · −0.25 negative marking</div>
+      </div>
+      <span class="mock-test-arrow">›</span>`;
+    card.addEventListener('click', () => _startMockTest(test));
+    listEl.appendChild(card);
+  });
+}
+
+// ────────────────────────────────────────────────────────────
+//  RUN A TEST
+// ────────────────────────────────────────────────────────────
+function _startMockTest(test) {
+  TG.Haptic.medium();
+  MockData.currentTest  = test;
+  MockData.questions    = [...test.questions];
+  MockData.currentIndex = 0;
+  MockData.history      = [];
+
+  const testLabel  = document.getElementById('mock-test-label');
+  const resultName = document.getElementById('mock-result-testname');
+  if (testLabel)  testLabel.textContent  = test.name;
+  if (resultName) resultName.textContent = test.name;
+
+  _mockShow('mock-arena');
+
+  // Back in arena = quit confirmation
+  const special = ['Grand','Sunday'].includes(test.testNo);
+  TG.pushBack(() => {
+    TG.confirm('Quit this test? Your progress will be lost.', () => {
+      clearInterval(MockData.timerInterval);
+      TG.Haptic.warning();
+      if (special) {
+        _mockShow('mock-category-view');
+        TG.replaceBack(() => { showSubjectPicker(); });
+      } else {
+        _mockShow('mock-list-view');
+        TG.replaceBack(() => {
+          _mockShow('mock-category-view');
+          TG.replaceBack(() => { showSubjectPicker(); });
+        });
+      }
+    });
+  });
+
+  _loadMockQuestion();
+}
+
+function _loadMockQuestion() {
+  const q = MockData.questions[MockData.currentIndex];
+  if (!q) { _finishMock(); return; }
+
+  document.getElementById('mock-progress').textContent =
+    `Q ${MockData.currentIndex + 1} / ${MockData.questions.length}`;
+  document.getElementById('mock-q-text').textContent = q.question || '';
+
+  ['a','b','c','d','e'].forEach(o => {
+    const btn  = document.getElementById('opt-' + o);
+    if (!btn) return;
+    const text = q['opt_' + o] || '';
+    btn.textContent   = text;
+    btn.className     = 'mock-opt';
+    btn.disabled      = false;
+    btn.style.display = text ? '' : 'none';
+    btn.onclick       = text ? () => _handleMockAnswer(text, q.answer, q) : null;
+  });
+}
+
+function _handleMockAnswer(selectedText, correctText, qObj) {
+  TG.Haptic.light();
+  const isCorrect = selectedText.trim() === correctText.trim();
+
+  document.querySelectorAll('.mock-opt').forEach(btn => {
+    btn.disabled = true;
+    if (btn.textContent.trim() === correctText.trim()) btn.classList.add('correct');
+    else if (btn.textContent.trim() === selectedText.trim() && !isCorrect) btn.classList.add('wrong');
+  });
+
+  MockData.history.push({
+    question: qObj.question, selected: selectedText,
+    correct: correctText, status: isCorrect ? 'correct' : 'wrong',
+  });
+
+  setTimeout(() => { MockData.currentIndex++; _loadMockQuestion(); }, 550);
+}
+
+function _finishMock() {
+  TG.Haptic.success();
+  let c = 0, w = 0, s = 0;
+  MockData.history.forEach(h => {
+    if      (h.status === 'correct') c++;
+    else if (h.status === 'wrong')   w++;
+    else                              s++;
+  });
+
+  const score = (c * 1) - (w * 0.25);
+  document.getElementById('mock-final-score').textContent = score.toFixed(2);
+  document.getElementById('count-correct').textContent    = c;
+  document.getElementById('count-wrong').textContent      = w;
+  document.getElementById('count-skip').textContent       = s;
+  document.getElementById('pts-correct').textContent      = c.toFixed(2);
+  document.getElementById('pts-wrong').textContent        = (w * 0.25).toFixed(2);
+
+  document.querySelectorAll('.rev-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.rev-btn[data-filter="all"]')?.classList.add('active');
+
+  _mockShow('mock-results');
+
+  // Show leaderboard popup after short delay so results screen renders first
+  const testName = MockData.currentTest?.name || 'Mock Test';
+  setTimeout(() => _showLeaderboard(testName, score), 600);
+
+  // Back from results
+  const special = ['Grand','Sunday'].includes(MockData.currentTest?.testNo);
+  TG.replaceBack(() => {
+    TG.Haptic.select();
+    if (special) {
+      _mockShow('mock-category-view');
+      TG.replaceBack(() => { showSubjectPicker(); });
+    } else {
+      _mockShow('mock-list-view');
+      TG.replaceBack(() => {
+        _mockShow('mock-category-view');
+        TG.replaceBack(() => { showSubjectPicker(); });
+      });
+    }
+  });
+
+  _renderMockReview('all');
+}
+
+function _renderMockReview(filter) {
+  const list = document.getElementById('mock-review-list');
+  if (!list) return;
+  list.innerHTML = '';
+
+  const data = filter === 'all'
+    ? MockData.history
+    : MockData.history.filter(h => h.status === filter);
+
+  if (!data.length) {
+    list.innerHTML = `<p style="text-align:center;color:var(--text-muted);padding:20px;font-size:13px;">No items here</p>`;
+    return;
+  }
+  data.forEach(h => {
+    const div = document.createElement('div');
+    div.className = `review-item ${h.status}`;
+    div.innerHTML = `
+      <div class="rev-q">${_escHtml(h.question)}</div>
+      <div class="rev-ans">✓ ${_escHtml(h.correct)}</div>
+      ${h.status === 'wrong' ? `<div class="rev-user">✗ You chose: ${_escHtml(h.selected)}</div>` : ''}`;
+    list.appendChild(div);
+  });
+}
+
+// ── Wire all mock buttons ─────────────────────────────────────
+function _initMockButtons() {
+  // Main CTA → open category screen
+  document.getElementById('btn-open-mock-list')?.addEventListener('click', _openMockCategories);
+
+  // Back: categories → subject picker
+  document.getElementById('btn-mock-cat-back')?.addEventListener('click', () => {
+    showSubjectPicker();
+  });
+
+  // Back: test list → categories
+  document.getElementById('btn-mock-list-back')?.addEventListener('click', () => {
+    _mockShow('mock-category-view');
+    TG.replaceBack(() => { showSubjectPicker(); });
+  });
+
+  // Skip
+  document.getElementById('btn-mock-skip')?.addEventListener('click', () => {
+    const q = MockData.questions[MockData.currentIndex];
+    if (!q) return;
+    MockData.history.push({ question: q.question, selected: 'Skipped', correct: q.answer, status: 'skipped' });
+    TG.Haptic.light();
+    MockData.currentIndex++;
+    _loadMockQuestion();
+  });
+
+  // Quit arena
+  document.getElementById('btn-mock-exit')?.addEventListener('click', () => {
+    TG.confirm('Quit this test? Your progress will be lost.', () => {
+      clearInterval(MockData.timerInterval);
+      TG.Haptic.warning();
+      const special = ['Grand','Sunday'].includes(MockData.currentTest?.testNo);
+      if (special) {
+        _mockShow('mock-category-view');
+        TG.replaceBack(() => { showSubjectPicker(); });
+      } else {
+        _mockShow('mock-list-view');
+        TG.replaceBack(() => {
+          _mockShow('mock-category-view');
+          TG.replaceBack(() => { showSubjectPicker(); });
+        });
+      }
+    });
+  });
+
+  // Results back
+  document.getElementById('btn-mock-home')?.addEventListener('click', () => {
+    TG.Haptic.select();
+    const special = ['Grand','Sunday'].includes(MockData.currentTest?.testNo);
+    if (special) {
+      _mockShow('mock-category-view');
+      TG.replaceBack(() => { showSubjectPicker(); });
+    } else {
+      _mockShow('mock-list-view');
+      TG.replaceBack(() => {
+        _mockShow('mock-category-view');
+        TG.replaceBack(() => { showSubjectPicker(); });
+      });
+    }
+  });
+
+  // Review filters
+  document.querySelectorAll('.rev-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.rev-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      _renderMockReview(btn.dataset.filter);
+      TG.Haptic.select();
+    });
+  });
+}
+
+// ════════════════════════════════════════════════════════════════
+
 
 // ════════════════════════════════════════════════════════════════
 //  LEADERBOARD ENGINE — Firebase shared, real-time, all users
