@@ -471,7 +471,7 @@ body {
 
 .subject-card-name {
   font-family: var(--font-title);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.3;
@@ -3287,7 +3287,7 @@ body {
 
 .mock-list-title {
   font-family: var(--font-title);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0 0 2px;
@@ -3403,7 +3403,7 @@ body {
 
 .mock-cat-name {
   font-family: var(--font-title);
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
@@ -3455,7 +3455,7 @@ body {
 
 .mock-test-name {
   font-family: var(--font-title);
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--text-primary);
 }
@@ -3881,7 +3881,7 @@ body {
 
 .sched-name {
   font-family: var(--font-title);
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
@@ -3996,7 +3996,7 @@ body {
 
 .smb-title {
   font-family: var(--font-title);
-  font-size: 13px;
+  font-size: 15px;
   font-weight: 700;
   color: var(--text-primary);
   line-height: 1.2;
