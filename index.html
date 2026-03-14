@@ -441,6 +441,52 @@
         </div>
       </div>
 
+      <!-- ── DAILY TARGET SETTER ── -->
+      <div class="daily-target-section">
+        <div class="daily-target-header">
+          <h3 class="section-title">Daily Target</h3>
+          <span class="daily-target-today" id="daily-target-today-count">0 done today</span>
+        </div>
+        <!-- Ring + label -->
+        <div class="daily-target-ring-row">
+          <div class="daily-target-ring-wrap">
+            <svg class="daily-target-svg" viewBox="0 0 80 80">
+              <circle class="dtr-track" cx="40" cy="40" r="34"/>
+              <circle class="dtr-fill"  cx="40" cy="40" r="34" id="dtr-fill-circle"/>
+            </svg>
+            <div class="daily-target-ring-inner">
+              <span class="dtr-pct" id="dtr-pct">0%</span>
+            </div>
+          </div>
+          <div class="daily-target-info">
+            <div class="dtr-goal-row">
+              <span class="dtr-goal-label">Today's goal</span>
+              <span class="dtr-goal-val" id="dtr-goal-val">25 cards</span>
+            </div>
+            <div class="dtr-progress-row">
+              <div class="dtr-bar-track">
+                <div class="dtr-bar-fill" id="dtr-bar-fill" style="width:0%"></div>
+              </div>
+            </div>
+            <div class="dtr-status" id="dtr-status">Keep going! 💪</div>
+          </div>
+        </div>
+        <!-- Quick-pick targets -->
+        <div class="dtr-presets">
+          <button class="dtr-preset-btn" data-target="10">10</button>
+          <button class="dtr-preset-btn" data-target="25">25</button>
+          <button class="dtr-preset-btn" data-target="50">50</button>
+          <button class="dtr-preset-btn" data-target="100">100</button>
+          <button class="dtr-preset-btn dtr-custom-btn" id="dtr-custom-btn">Custom</button>
+        </div>
+        <!-- Hidden custom input -->
+        <div class="dtr-custom-row hidden" id="dtr-custom-row">
+          <input class="dtr-custom-input" id="dtr-custom-input"
+                 type="number" min="1" max="9999" placeholder="Enter target…" />
+          <button class="dtr-set-btn" id="dtr-set-btn">Set</button>
+        </div>
+      </div>
+
       <!-- Weekly heatmap -->
       <div class="heatmap-section">
         <h3 class="section-title">This Week</h3>
