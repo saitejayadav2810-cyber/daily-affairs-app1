@@ -24,16 +24,29 @@ const TG = (() => {
     twa.expand();
 
     // ── Hide the top header bar (Bot name / × button) ────────
-    // requestFullscreen() is available from Telegram WebApp API v8.0+
     if (typeof twa.requestFullscreen === 'function') {
       twa.requestFullscreen();
     }
 
-    // Re-enter fullscreen if user exits it (e.g. via system gesture)
+    // ── Safe area: push app content below the status bar ─────
+    // Telegram provides safeAreaInset.top (px) in fullscreen mode.
+    // We write it to --tg-safe-top so CSS can consume it reliably.
+    function _applySafeArea() {
+      const top    = twa.safeAreaInset?.top    ?? 0;
+      const bottom = twa.safeAreaInset?.bottom ?? 0;
+      const root   = document.documentElement;
+      root.style.setProperty('--tg-safe-top',    top    + 'px');
+      root.style.setProperty('--tg-safe-bottom', bottom + 'px');
+    }
+    _applySafeArea();
+    twa.onEvent('safeAreaChanged',   _applySafeArea);
     twa.onEvent('fullscreenChanged', () => {
+      // Re-request fullscreen if user exits it
       if (!twa.isFullscreen && typeof twa.requestFullscreen === 'function') {
         twa.requestFullscreen();
       }
+      // Re-apply safe area after state change
+      _applySafeArea();
     });
 
     // Apply Telegram's colour theme to CSS variables
