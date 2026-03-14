@@ -701,5 +701,28 @@
       loadNext();
     })();
   </script>
+  <!-- ═══════════════════════════════════════════════
+       LEADERBOARD POPUP
+  ════════════════════════════════════════════════ -->
+  <div class="lb-overlay hidden" id="lb-overlay">
+    <div class="lb-sheet" id="lb-sheet">
+      <div class="lb-handle"></div>
+      <div class="lb-head">
+        <div class="lb-head-left">
+          <div class="lb-title" id="lb-title">Leaderboard</div>
+          <div class="lb-sub" id="lb-sub">Top 10 scores</div>
+        </div>
+        <button class="lb-close" id="lb-close">✕</button>
+      </div>
+      <!-- Your score highlight -->
+      <div class="lb-my-score" id="lb-my-score"></div>
+      <!-- Top 10 list -->
+      <div class="lb-list" id="lb-list">
+        <div class="lb-loading">⏳ Loading scores…</div>
+      </div>
+      <button class="lb-continue-btn" id="lb-continue-btn">Continue →</button>
+    </div>
+  </div>
+
 </body>
 </html>
