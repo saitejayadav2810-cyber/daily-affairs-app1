@@ -29,8 +29,6 @@ const TG = (() => {
     }
 
     // ── Safe area: push app content below the status bar ─────
-    // Telegram provides safeAreaInset.top (px) in fullscreen mode.
-    // We write it to --tg-safe-top so CSS can consume it reliably.
     function _applySafeArea() {
       const top    = twa.safeAreaInset?.top    ?? 0;
       const bottom = twa.safeAreaInset?.bottom ?? 0;
@@ -41,11 +39,9 @@ const TG = (() => {
     _applySafeArea();
     twa.onEvent('safeAreaChanged',   _applySafeArea);
     twa.onEvent('fullscreenChanged', () => {
-      // Re-request fullscreen if user exits it
       if (!twa.isFullscreen && typeof twa.requestFullscreen === 'function') {
         twa.requestFullscreen();
       }
-      // Re-apply safe area after state change
       _applySafeArea();
     });
 
