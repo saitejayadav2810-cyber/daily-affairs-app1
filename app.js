@@ -796,8 +796,9 @@ function _handleNext(question) {
   // "Got it" — mark seen, load next
   _recordHistory(question, 'done');
   markSeen(question.id);
-  _incrementDailyDone();
+  const targetHit = _incrementDailyDone();
   TG.Haptic.success();
+  if (targetHit) { setTimeout(_showDailyTargetCelebration, 200); return; }
   setTimeout(loadNextCard, 110);
 }
 
@@ -805,7 +806,8 @@ function _handleSkip(question) {
   _recordHistory(question, 'skipped');
   skipCard(question.id);
   markSeen(question.id);
-  _incrementDailyDone();
+  const targetHit = _incrementDailyDone();
+  if (targetHit) { setTimeout(_showDailyTargetCelebration, 200); return; }
   setTimeout(loadNextCard, 110);
 }
 
@@ -813,7 +815,8 @@ function _handleSave(question) {
   _recordHistory(question, 'saved');
   saveCard(question);
   markSeen(question.id);
-  _incrementDailyDone();
+  const targetHit = _incrementDailyDone();
+  if (targetHit) { setTimeout(_showDailyTargetCelebration, 200); return; }
   setTimeout(loadNextCard, 110);
 }
 
@@ -1517,11 +1520,17 @@ function _getDailyDoneCount() {
   return rec.count || 0;
 }
 
-/** Increment today's done count by 1 */
+/** Increment today's done count by 1.
+ *  Returns true if this increment caused the daily target to be hit
+ *  for the first time (i.e. crossed from below to at/above). */
 function _incrementDailyDone() {
-  const rec   = ls_get(LS.DAILY_DONE, { date: '', count: 0 });
-  const count = rec.date === today() ? (rec.count || 0) + 1 : 1;
+  const target  = ls_get(LS.DAILY_TARGET, 25);
+  const rec     = ls_get(LS.DAILY_DONE, { date: '', count: 0 });
+  const prev    = rec.date === today() ? (rec.count || 0) : 0;
+  const count   = prev + 1;
   ls_set(LS.DAILY_DONE, { date: today(), count });
+  // Fire celebration only at the exact crossing point
+  return prev < target && count >= target;
 }
 
 /** Render the ring, bar, status text and preset highlights */
@@ -1612,6 +1621,98 @@ function _initDailyTarget() {
 
   // Initial render
   _updateDailyTarget();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  DAILY TARGET CELEBRATION  🎉
+// ════════════════════════════════════════════════════════════════
+
+function _showDailyTargetCelebration() {
+  const target = ls_get(LS.DAILY_TARGET, 25);
+  TG.Haptic.heavy();
+
+  // ── Build overlay ────────────────────────────────────────────
+  const overlay = document.createElement('div');
+  overlay.className = 'dtc-overlay';
+  overlay.innerHTML = `
+    <canvas class="dtc-canvas" id="dtc-canvas"></canvas>
+    <div class="dtc-card">
+      <div class="dtc-icon">🏆</div>
+      <h2 class="dtc-title">Daily Target Complete!</h2>
+      <p class="dtc-sub">You studied <strong>${target} cards</strong> today.<br>That's a huge step towards your goal! 🌾</p>
+      <div class="dtc-streak-row">
+        <span class="dtc-streak-icon">🔥</span>
+        <span class="dtc-streak-val">${ls_get(LS.STATS, {streak:0}).streak || 1} Day Streak</span>
+      </div>
+      <button class="dtc-continue-btn" id="dtc-continue-btn">Continue Studying →</button>
+      <button class="dtc-done-btn"     id="dtc-done-btn">I'm done for today ✓</button>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+
+  // Animate in
+  requestAnimationFrame(() => overlay.classList.add('dtc-open'));
+
+  // ── Canvas confetti ───────────────────────────────────────────
+  const canvas = document.getElementById('dtc-canvas');
+  const ctx    = canvas.getContext('2d');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  const COLORS = ['#00E5FF','#00E676','#FFAB00','#FF5252','#7C4DFF','#FF6D00','#69F0AE','#40C4FF'];
+  const pieces = Array.from({ length: 120 }, () => ({
+    x:     Math.random() * canvas.width,
+    y:     Math.random() * canvas.height * -1,   // start above screen
+    w:     6  + Math.random() * 8,
+    h:     10 + Math.random() * 6,
+    color: COLORS[Math.floor(Math.random() * COLORS.length)],
+    rot:   Math.random() * Math.PI * 2,
+    vx:    (Math.random() - 0.5) * 3,
+    vy:    2 + Math.random() * 4,
+    vr:    (Math.random() - 0.5) * 0.2,
+    alpha: 1,
+  }));
+
+  let animId;
+  function drawConfetti() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    let allDone = true;
+    pieces.forEach(p => {
+      p.x   += p.vx;
+      p.y   += p.vy;
+      p.rot += p.vr;
+      if (p.y > canvas.height * 0.6) p.alpha = Math.max(0, p.alpha - 0.012);
+      if (p.alpha > 0) allDone = false;
+
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.translate(p.x, p.y);
+      ctx.rotate(p.rot);
+      ctx.fillStyle = p.color;
+      ctx.fillRect(-p.w / 2, -p.h / 2, p.w, p.h);
+      ctx.restore();
+    });
+    if (!allDone) animId = requestAnimationFrame(drawConfetti);
+  }
+  animId = requestAnimationFrame(drawConfetti);
+
+  // ── Button handlers ───────────────────────────────────────────
+  function _close(continueStudying) {
+    cancelAnimationFrame(animId);
+    overlay.classList.remove('dtc-open');
+    overlay.classList.add('dtc-closing');
+    TG.Haptic.select();
+    setTimeout(() => {
+      overlay.remove();
+      if (continueStudying) {
+        loadNextCard();
+      }
+    }, 320);
+  }
+
+  document.getElementById('dtc-continue-btn')?.addEventListener('click', () => _close(true),  { once: true });
+  document.getElementById('dtc-done-btn')    ?.addEventListener('click', () => _close(false), { once: true });
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) _close(false); });
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1993,54 +2094,70 @@ function _showChannelPopup() {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  USER COUNT  — unique visitor counter using localStorage
-//  Uses a simple timestamp-seeded unique ID per device.
-//  Displays total count stored locally; auto-increments on first visit.
+//  USER COUNT  — unique Telegram user counter
+//  Uses counterapi.dev (free, no auth, replaces dead countapi.xyz)
+//  Tracks unique users via Telegram user ID or a per-device UUID.
 // ════════════════════════════════════════════════════════════════
 
-const COUNT_NAMESPACE = 'agrimets-app';
-const COUNT_KEY       = 'user-visits';
+const COUNT_NS  = 'agrimets-app-v2';  // namespace on counterapi.dev
+const COUNT_KEY = 'unique-users';
 
 async function _initUserCount() {
   const countEl = document.getElementById('user-count-val');
   if (!countEl) return;
 
   try {
-    // Mark this device if not counted yet
-    const alreadyCounted = ls_get('dca_counted', false);
-    if (!alreadyCounted) {
-      const current = ls_get('dca_user_count', 1);
-      ls_set('dca_user_count', current + 1);
-      ls_set('dca_counted', true);
+    // ── Generate a stable unique ID for this user ──────────────
+    // Prefer Telegram user ID; fall back to a stored random UUID
+    let uid = TG.getUserId?.() || ls_get('dca_uid', null);
+    if (!uid || uid === 'guest') {
+      uid = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
     }
+    ls_set('dca_uid', uid);
 
-    // Try live count from countapi (silent fail if blocked)
+    // ── Only hit the counter once per UID (ever) ──────────────
+    const countedKey = 'dca_counted_' + uid;
+    const alreadyCounted = ls_get(countedKey, false);
+
     let displayCount = ls_get('dca_user_count', 1);
 
     try {
-      const endpoint = alreadyCounted
-        ? `https://api.countapi.xyz/get/${COUNT_NAMESPACE}/${COUNT_KEY}`
-        : `https://api.countapi.xyz/hit/${COUNT_NAMESPACE}/${COUNT_KEY}`;
-
       const controller = new AbortController();
-      const timeout    = setTimeout(() => controller.abort(), 3000); // 3s timeout
+      const timeout    = setTimeout(() => controller.abort(), 4000);
+
+      let endpoint;
+      if (!alreadyCounted) {
+        // First time — increment the global counter
+        endpoint = `https://counterapi.dev/api/${COUNT_NS}/${COUNT_KEY}/up`;
+      } else {
+        // Already counted — just read
+        endpoint = `https://counterapi.dev/api/${COUNT_NS}/${COUNT_KEY}`;
+      }
 
       const res  = await fetch(endpoint, { signal: controller.signal, cache: 'no-store' });
       clearTimeout(timeout);
-      const data = await res.json();
-      if (data && data.value > 0) {
-        displayCount = data.value;
-        ls_set('dca_user_count', data.value); // cache it locally
+
+      if (res.ok) {
+        const data = await res.json();
+        // counterapi.dev returns { value: N } or { count: N }
+        const val = data?.value ?? data?.count ?? null;
+        if (val && val > 0) {
+          displayCount = val;
+          ls_set('dca_user_count', val);
+          if (!alreadyCounted) {
+            ls_set(countedKey, true); // mark as counted only on success
+          }
+        }
       }
     } catch (_) {
-      // API blocked/down — use locally cached count, no crash
+      // API down / no network — fall back to local cache, no crash
     }
 
     _animateCount(countEl, displayCount);
 
   } catch (e) {
-    const countEl2 = document.getElementById('user-count-val');
-    if (countEl2) countEl2.textContent = '—';
+    const el = document.getElementById('user-count-val');
+    if (el) el.textContent = ls_get('dca_user_count', '—');
   }
 }
 
