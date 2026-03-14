@@ -3012,3 +3012,165 @@ body {
 .dtr-set-btn:active {
   background: rgba(0,229,255,0.22);
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   DAILY TARGET CELEBRATION OVERLAY  🎉
+═══════════════════════════════════════════════════════════════ */
+.dtc-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  opacity: 0;
+  transition: opacity 0.28s ease;
+  padding: 24px;
+}
+
+.dtc-overlay.dtc-open {
+  opacity: 1;
+}
+
+.dtc-overlay.dtc-closing {
+  opacity: 0;
+  transition: opacity 0.32s ease;
+}
+
+/* Full-screen canvas for confetti — sits behind the card */
+.dtc-canvas {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* The white popup card */
+.dtc-card {
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(145deg, #13132a 0%, #0e0e1e 100%);
+  border: 1px solid rgba(255,255,255,0.10);
+  border-radius: var(--r-xl);
+  padding: 32px 24px 24px;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  box-shadow: 0 32px 80px rgba(0,0,0,0.8), 0 0 0 1px rgba(0,229,255,0.12);
+  transform: scale(0.88) translateY(24px);
+  transition: transform 0.38s cubic-bezier(0.34, 1.4, 0.64, 1);
+}
+
+.dtc-overlay.dtc-open .dtc-card {
+  transform: scale(1) translateY(0);
+}
+
+/* Trophy icon */
+.dtc-icon {
+  font-size: 64px;
+  line-height: 1;
+  margin-bottom: 16px;
+  filter: drop-shadow(0 0 20px rgba(255,171,0,0.7));
+  animation: dtc-bounce 0.7s cubic-bezier(0.34, 1.6, 0.64, 1) 0.2s both;
+}
+
+@keyframes dtc-bounce {
+  from { transform: scale(0) rotate(-20deg); opacity: 0; }
+  to   { transform: scale(1) rotate(0deg);   opacity: 1; }
+}
+
+/* Title */
+.dtc-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #00E5FF, #00E676);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 12px;
+  letter-spacing: -0.3px;
+}
+
+/* Sub text */
+.dtc-sub {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.65;
+  margin-bottom: 18px;
+}
+
+.dtc-sub strong {
+  color: var(--amber);
+  font-weight: 700;
+}
+
+/* Streak pill */
+.dtc-streak-row {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255,171,0,0.12);
+  border: 1px solid rgba(255,171,0,0.3);
+  border-radius: 99px;
+  padding: 6px 16px;
+  margin-bottom: 22px;
+}
+
+.dtc-streak-icon { font-size: 18px; }
+
+.dtc-streak-val {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--amber);
+}
+
+/* Continue button */
+.dtc-continue-btn {
+  display: block;
+  width: 100%;
+  padding: 15px 20px;
+  background: linear-gradient(135deg, var(--cyan), #3d5afe);
+  border: none;
+  border-radius: var(--r-lg);
+  color: #000;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 800;
+  cursor: pointer;
+  margin-bottom: 10px;
+  transition: transform 0.08s, box-shadow 0.08s;
+  box-shadow: 0 6px 24px rgba(0,229,255,0.35);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dtc-continue-btn:active {
+  transform: scale(0.97);
+  box-shadow: 0 2px 10px rgba(0,229,255,0.2);
+}
+
+/* Done for today button */
+.dtc-done-btn {
+  display: block;
+  width: 100%;
+  padding: 12px 20px;
+  background: none;
+  border: 1px solid var(--glass-border);
+  border-radius: var(--r-lg);
+  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.08s, border-color 0.08s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dtc-done-btn:active {
+  color: var(--text-secondary);
+  border-color: rgba(255,255,255,0.15);
+}
