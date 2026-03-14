@@ -2671,8 +2671,7 @@ async function _openMockCategories() {
   _mockShow('mock-category-view');
   // Back → subject picker
   TG.pushBack(() => {
-    _mockShow('subject-picker');
-    TG.popBack();
+    showSubjectPicker();
   });
 
   const catListEl = document.getElementById('mock-category-list');
@@ -3096,7 +3095,7 @@ function _openCategoryTests(cat) {
   // ── Empty state for scheduled category ───────────────────────
   if (schedCfg && rows.length === 0) {
     _mockShow('mock-list-view');
-    TG.pushBack(() => { _mockShow('mock-category-view'); TG.popBack(); });
+    TG.pushBack(() => { _mockShow('mock-category-view'); TG.replaceBack(() => { showSubjectPicker(); }); });
 
     // Work out WHY it's empty and show the right message
     const todayTestNo = _getDailyTestNoReadOnly(cat.norm);
@@ -3157,7 +3156,7 @@ function _openCategoryTests(cat) {
     `${MockData.testList.length} test${MockData.testList.length !== 1 ? 's' : ''} available`;
 
   _mockShow('mock-list-view');
-  TG.pushBack(() => { _mockShow('mock-category-view'); TG.popBack(); });
+  TG.pushBack(() => { _mockShow('mock-category-view'); TG.replaceBack(() => { showSubjectPicker(); }); });
   _renderMockTestList();
 }
 
@@ -3219,12 +3218,12 @@ function _startMockTest(test) {
       TG.Haptic.warning();
       if (special) {
         _mockShow('mock-category-view');
-        TG.replaceBack(() => { _mockShow('subject-picker'); TG.popBack(); });
+        TG.replaceBack(() => { showSubjectPicker(); });
       } else {
         _mockShow('mock-list-view');
         TG.replaceBack(() => {
           _mockShow('mock-category-view');
-          TG.replaceBack(() => { _mockShow('subject-picker'); TG.popBack(); });
+          TG.replaceBack(() => { showSubjectPicker(); });
         });
       }
     });
@@ -3303,12 +3302,12 @@ function _finishMock() {
     TG.Haptic.select();
     if (special) {
       _mockShow('mock-category-view');
-      TG.replaceBack(() => { _mockShow('subject-picker'); TG.popBack(); });
+      TG.replaceBack(() => { showSubjectPicker(); });
     } else {
       _mockShow('mock-list-view');
       TG.replaceBack(() => {
         _mockShow('mock-category-view');
-        TG.replaceBack(() => { _mockShow('subject-picker'); TG.popBack(); });
+        TG.replaceBack(() => { showSubjectPicker(); });
       });
     }
   });
@@ -3347,17 +3346,13 @@ function _initMockButtons() {
 
   // Back: categories → subject picker
   document.getElementById('btn-mock-cat-back')?.addEventListener('click', () => {
-    _mockShow('subject-picker');
-    TG.popBack();
+    showSubjectPicker();
   });
 
   // Back: test list → categories
   document.getElementById('btn-mock-list-back')?.addEventListener('click', () => {
     _mockShow('mock-category-view');
-    TG.replaceBack(() => {
-      _mockShow('subject-picker');
-      TG.popBack();
-    });
+    TG.replaceBack(() => { showSubjectPicker(); });
   });
 
   // Skip
@@ -3378,12 +3373,12 @@ function _initMockButtons() {
       const special = ['Grand','Sunday'].includes(MockData.currentTest?.testNo);
       if (special) {
         _mockShow('mock-category-view');
-        TG.replaceBack(() => { _mockShow('subject-picker'); TG.popBack(); });
+        TG.replaceBack(() => { showSubjectPicker(); });
       } else {
         _mockShow('mock-list-view');
         TG.replaceBack(() => {
           _mockShow('mock-category-view');
-          TG.replaceBack(() => { _mockShow('subject-picker'); TG.popBack(); });
+          TG.replaceBack(() => { showSubjectPicker(); });
         });
       }
     });
@@ -3395,12 +3390,12 @@ function _initMockButtons() {
     const special = ['Grand','Sunday'].includes(MockData.currentTest?.testNo);
     if (special) {
       _mockShow('mock-category-view');
-      TG.replaceBack(() => { _mockShow('subject-picker'); TG.popBack(); });
+      TG.replaceBack(() => { showSubjectPicker(); });
     } else {
       _mockShow('mock-list-view');
       TG.replaceBack(() => {
         _mockShow('mock-category-view');
-        TG.replaceBack(() => { _mockShow('subject-picker'); TG.popBack(); });
+        TG.replaceBack(() => { showSubjectPicker(); });
       });
     }
   });
@@ -3557,7 +3552,12 @@ function _showLeaderboard(testName, myScore) {
   }, { once: true });
 }
 
+let _bootCalled = false;
 async function boot() {
+  // Guard: prevent double-boot (e.g. from service worker update triggers)
+  if (_bootCalled) return;
+  _bootCalled = true;
+
   // 1. Cache DOM
   _cacheDom();
 
@@ -3591,13 +3591,17 @@ async function boot() {
   _initMockButtons();
   _initSundayMegaBanner();
 
-  // 7. Dismiss splash
+  // 7. Dismiss splash — always runs, even if earlier steps errored
+  const _dismissSplash = () => {
+    DOM.splash?.classList.remove('hidden'); // ensure visible before fade
+    DOM.splash?.classList.add('fade-out');
+    setTimeout(() => {
+      DOM.splash?.classList.add('hidden');
+      DOM.app?.classList.remove('hidden');
+    }, 200);
+  };
   await _delay(300);
-  DOM.splash?.classList.add('fade-out');
-  setTimeout(() => {
-    DOM.splash?.classList.add('hidden');
-    DOM.app?.classList.remove('hidden');
-  }, 200);
+  _dismissSplash();
 
   // 8. Show subject picker (card area hidden by default)
   DOM.cardArea?.classList.add('hidden');
