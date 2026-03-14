@@ -1602,70 +1602,60 @@ body {
 .user-count-banner {
   display: flex;
   align-items: center;
-  justify-content: space-around;
-  margin: 6px 16px 4px;
-  padding: 10px 16px;
+  justify-content: space-evenly;
+  margin: 8px 16px 6px;
+  padding: 12px 16px;
   background: var(--surface);
   border: 1px solid var(--glass-border);
   border-radius: var(--r-md);
-  position: relative;
-  overflow: hidden;
+  flex-shrink: 0;
 }
 
-.user-count-banner::before {
-  content: '';
-  position: absolute;
-  top: -16px; right: -16px;
-  width: 60px; height: 60px;
-  background: radial-gradient(circle, rgba(0,229,255,0.06), transparent 70%);
-  border-radius: 50%;
-}
-
-.user-count-stat {
+.uc-stat {
   display: flex;
+  flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   flex: 1;
   justify-content: center;
 }
 
-.user-count-divider {
-  width: 1px;
-  height: 30px;
-  background: var(--glass-border);
+.uc-icon {
+  font-size: 20px;
+  line-height: 1;
   flex-shrink: 0;
 }
 
-.user-count-icon-wrap {
-  font-size: 16px;
-  line-height: 1;
+.uc-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
 }
 
-.user-count-icon {
-  font-size: 16px;
-}
-
-.user-count-label {
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-top: 1px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-}
-
-.user-count-sub {
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-top: 1px;
-}
-
-.user-count-number {
+.uc-val {
   font-family: var(--font-display);
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
   color: var(--cyan);
   line-height: 1;
+}
+
+.uc-lbl {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.uc-divider {
+  width: 1px;
+  height: 36px;
+  background: var(--glass-border);
+  flex-shrink: 0;
+  margin: 0 8px;
 }
 
 /* ═══════════════════════════════════════════════════════════════
