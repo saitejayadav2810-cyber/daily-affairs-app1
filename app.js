@@ -3678,17 +3678,65 @@ async function _showLeaderboard(testName, myScore) {
     }
 
   } else {
-    // Offline / no Firebase configured
+    // Firebase unreachable — show clear error with retry
+    if (myScoreEl) {
+      myScoreEl.innerHTML = `
+        <div>
+          <div class="lb-my-name">👤 ${_escHtml(name)}</div>
+          <div class="lb-my-rank">Your score</div>
+        </div>
+        <div class="lb-my-pts">${myScore.toFixed(2)}</div>
+      `;
+    }
     if (listEl) {
-      const msg = CONFIG.FB_URL
-        ? 'Could not reach Firebase. Score saved locally.'
-        : 'Firebase not configured yet.<br>Add your FB_URL in CONFIG.';
       listEl.innerHTML = `
-        <div class="lb-loading" style="padding:24px;text-align:center;">
-          <div style="font-size:32px;margin-bottom:10px;">📶</div>
-          <div style="color:var(--text-secondary);font-size:13px;line-height:1.5;">${msg}</div>
+        <div style="text-align:center;padding:28px 16px;">
+          <div style="font-size:30px;margin-bottom:10px;">⚠️</div>
+          <div style="color:var(--text-secondary);font-size:13px;line-height:1.6;margin-bottom:16px;">
+            Could not load rankings.<br>Check your connection and try again.
+          </div>
+          <button id="lb-retry-btn" style="
+            background:var(--cyan-dim);border:1px solid var(--cyan);
+            color:var(--cyan);border-radius:var(--r-md);padding:8px 20px;
+            font-size:13px;font-weight:600;cursor:pointer;">
+            🔄 Retry
+          </button>
         </div>
       `;
+      // Retry button re-runs the fetch
+      document.getElementById('lb-retry-btn')?.addEventListener('click', async () => {
+        if (listEl) listEl.innerHTML = '<div class="lb-loading">⏳ Fetching rankings…</div>';
+        const retryData = await _fetchLbScores(testKey);
+        if (retryData && retryData.top && retryData.top.length > 0) {
+          const medals = ['🥇', '🥈', '🥉'];
+          const myRank = retryData.myRank;
+          const total  = retryData.total || 0;
+          if (myScoreEl) {
+            myScoreEl.innerHTML = `
+              <div>
+                <div class="lb-my-name">👤 ${_escHtml(name)}</div>
+                <div class="lb-my-rank">${myRank ? `Rank #${myRank} of ${total} student${total !== 1 ? 's' : ''}` : 'Your score'}</div>
+              </div>
+              <div class="lb-my-pts">${myScore.toFixed(2)}</div>
+            `;
+          }
+          if (subEl) subEl.textContent = `${testName} · ${total} attempt${total !== 1 ? 's' : ''}`;
+          listEl.innerHTML = '';
+          retryData.top.forEach(r => {
+            const isMe = r.uid === uid;
+            const div  = document.createElement('div');
+            div.className = 'lb-row' + (isMe ? ' lb-me' : '');
+            div.innerHTML = `
+              <div class="lb-rank">${medals[r.rank - 1] || '#' + r.rank}</div>
+              <div class="lb-name">${_escHtml(r.name)}${isMe ? ' <span class="lb-you-tag">You</span>' : ''}</div>
+              <div class="lb-score">${Number(r.score).toFixed(2)}</div>
+            `;
+            listEl.appendChild(div);
+          });
+        } else {
+          listEl.innerHTML = `<div class="lb-loading" style="color:var(--red);">Still unreachable. Check Firebase rules.</div>`;
+        }
+      }, { once: true });
     }
   }
 
