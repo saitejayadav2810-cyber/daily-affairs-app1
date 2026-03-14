@@ -2143,28 +2143,47 @@ function _showChannelPopup() {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  USER COUNT  — unique Telegram user counter
-//  Uses counterapi.dev (free, no auth, replaces dead countapi.xyz)
-//  Tracks unique users via Telegram user ID or a per-device UUID.
+//  USER COUNT  — unique Telegram user counter via counterapi.dev
 // ════════════════════════════════════════════════════════════════
 
-const COUNT_NS  = 'agrimets-app-v2';  // namespace on counterapi.dev
+const COUNT_NS  = 'agrimets-app-v2';
 const COUNT_KEY = 'unique-users';
+
+// ── Get stable display name for this user ────────────────────
+function _getUserDisplayName() {
+  const tgUser = TG.getUser?.();
+  if (tgUser) {
+    const name = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ').trim();
+    return name || tgUser.username || 'User_' + tgUser.id;
+  }
+  // Fallback: generate a stable name from stored uid
+  const uid = ls_get('dca_uid', null);
+  if (uid) return 'User_' + uid.slice(-6);
+  return 'Guest';
+}
+
+// ── Get or create stable unique ID for this user ─────────────
+function _getOrCreateUid() {
+  const tgUser = TG.getUser?.();
+  if (tgUser?.id) {
+    const tid = 'tg_' + tgUser.id;
+    ls_set('dca_uid', tid);
+    return tid;
+  }
+  let uid = ls_get('dca_uid', null);
+  if (!uid) {
+    uid = 'u_' + Date.now().toString(36) + '_' + Math.random().toString(36).slice(2, 8);
+    ls_set('dca_uid', uid);
+  }
+  return uid;
+}
 
 async function _initUserCount() {
   const countEl = document.getElementById('user-count-val');
   if (!countEl) return;
 
   try {
-    // ── Generate a stable unique ID for this user ──────────────
-    // Prefer Telegram user ID; fall back to a stored random UUID
-    let uid = TG.getUserId?.() || ls_get('dca_uid', null);
-    if (!uid || uid === 'guest') {
-      uid = 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9);
-    }
-    ls_set('dca_uid', uid);
-
-    // ── Only hit the counter once per UID (ever) ──────────────
+    const uid        = _getOrCreateUid();
     const countedKey = 'dca_counted_' + uid;
     const alreadyCounted = ls_get(countedKey, false);
 
@@ -2172,34 +2191,30 @@ async function _initUserCount() {
 
     try {
       const controller = new AbortController();
-      const timeout    = setTimeout(() => controller.abort(), 4000);
+      const timeout    = setTimeout(() => controller.abort(), 5000);
 
-      let endpoint;
-      if (!alreadyCounted) {
-        // First time — increment the global counter
-        endpoint = `https://counterapi.dev/api/${COUNT_NS}/${COUNT_KEY}/up`;
-      } else {
-        // Already counted — just read
-        endpoint = `https://counterapi.dev/api/${COUNT_NS}/${COUNT_KEY}`;
-      }
+      const endpoint = alreadyCounted
+        ? `https://counterapi.dev/api/${COUNT_NS}/${COUNT_KEY}`
+        : `https://counterapi.dev/api/${COUNT_NS}/${COUNT_KEY}/up`;
 
-      const res  = await fetch(endpoint, { signal: controller.signal, cache: 'no-store' });
+      const res = await fetch(endpoint, {
+        signal: controller.signal,
+        cache: 'no-store'
+      });
       clearTimeout(timeout);
 
       if (res.ok) {
         const data = await res.json();
-        // counterapi.dev returns { value: N } or { count: N }
-        const val = data?.value ?? data?.count ?? null;
-        if (val && val > 0) {
-          displayCount = val;
-          ls_set('dca_user_count', val);
-          if (!alreadyCounted) {
-            ls_set(countedKey, true); // mark as counted only on success
-          }
+        // counterapi.dev returns { key, value, namespace }
+        const val = data?.value ?? data?.count ?? data?.hit ?? null;
+        if (val && Number(val) > 0) {
+          displayCount = Number(val);
+          ls_set('dca_user_count', displayCount);
+          if (!alreadyCounted) ls_set(countedKey, true);
         }
       }
     } catch (_) {
-      // API down / no network — fall back to local cache, no crash
+      // API unreachable — show cached count
     }
 
     _animateCount(countEl, displayCount);
@@ -3278,6 +3293,10 @@ function _finishMock() {
 
   _mockShow('mock-results');
 
+  // Show leaderboard popup after short delay so results screen renders first
+  const testName = MockData.currentTest?.name || 'Mock Test';
+  setTimeout(() => _showLeaderboard(testName, score), 600);
+
   // Back from results
   const special = ['Grand','Sunday'].includes(MockData.currentTest?.testNo);
   TG.replaceBack(() => {
@@ -3395,6 +3414,147 @@ function _initMockButtons() {
       TG.Haptic.select();
     });
   });
+}
+
+// ════════════════════════════════════════════════════════════════
+//  LEADERBOARD ENGINE
+//  Stores scores per test in counterapi.dev shared namespace.
+//  Key pattern: agrimets-lb-v1 / <testSlug>-<rank>
+//  Since counterapi is a counter-only API, we use localStorage
+//  as a shared simulation for leaderboard (per-device top scores).
+//  For a real shared leaderboard across all users, see note below.
+//
+//  HOW IDENTITY WORKS:
+//  • Inside Telegram: uses twa.initDataUnsafe.user (id + first_name)
+//    → Safe: set by Telegram server, cannot be faked by the user
+//  • Outside Telegram: uses a stable UUID stored in localStorage
+//    → Consistent across sessions on the same device
+//  • Display name: Telegram first_name+last_name, or auto "User_XXXX"
+// ════════════════════════════════════════════════════════════════
+
+const LB_NS       = 'agrimets-lb-v1';   // counterapi namespace for lb
+const LB_MAX_ROWS = 10;
+
+/**
+ * Save this user's score for a test.
+ * Only saves if it's their personal best for that test.
+ */
+function _saveLbScore(testKey, score, displayName) {
+  const key  = 'lb_' + testKey;
+  const all  = ls_get(key, []);
+  const uid  = _getOrCreateUid();
+
+  // Update or insert this user's entry
+  const existing = all.findIndex(r => r.uid === uid);
+  if (existing >= 0) {
+    if (score > all[existing].score) {
+      all[existing].score = score;
+      all[existing].name  = displayName;
+      all[existing].ts    = Date.now();
+    }
+  } else {
+    all.push({ uid, name: displayName, score, ts: Date.now() });
+  }
+
+  // Sort desc, keep top 50
+  all.sort((a, b) => b.score - a.score);
+  ls_set(key, all.slice(0, 50));
+}
+
+/**
+ * Get top 10 scores for a test from localStorage.
+ * Returns array of { uid, name, score, rank }
+ */
+function _getLbScores(testKey) {
+  const key = 'lb_' + testKey;
+  const all = ls_get(key, []);
+  return all.slice(0, LB_MAX_ROWS).map((r, i) => ({ ...r, rank: i + 1 }));
+}
+
+/**
+ * Make a safe key from test name for localStorage.
+ */
+function _lbKey(testName) {
+  return testName.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').slice(0, 40);
+}
+
+/**
+ * Show the leaderboard popup after a test is completed.
+ */
+function _showLeaderboard(testName, myScore) {
+  const overlay   = document.getElementById('lb-overlay');
+  const listEl    = document.getElementById('lb-list');
+  const myScoreEl = document.getElementById('lb-my-score');
+  const titleEl   = document.getElementById('lb-title');
+  const subEl     = document.getElementById('lb-sub');
+  const closeBtn  = document.getElementById('lb-close');
+  const contBtn   = document.getElementById('lb-continue-btn');
+  if (!overlay) return;
+
+  const uid     = _getOrCreateUid();
+  const name    = _getUserDisplayName();
+  const testKey = _lbKey(testName);
+
+  // Save score first
+  _saveLbScore(testKey, myScore, name);
+
+  // Populate header
+  if (titleEl) titleEl.textContent = '🏆 Leaderboard';
+  if (subEl)   subEl.textContent   = testName;
+
+  // Get top 10
+  const scores = _getLbScores(testKey);
+  const myRank = scores.findIndex(r => r.uid === uid) + 1;
+
+  // My score banner
+  if (myScoreEl) {
+    myScoreEl.innerHTML = `
+      <div>
+        <div class="lb-my-name">👤 ${_escHtml(name)}</div>
+        <div class="lb-my-rank">${myRank > 0 ? `Rank #${myRank} · ` : ''}Your score</div>
+      </div>
+      <div class="lb-my-pts">${myScore.toFixed(2)}</div>
+    `;
+  }
+
+  // Render list
+  if (listEl) {
+    if (scores.length === 0) {
+      listEl.innerHTML = `<div class="lb-loading">No scores yet — you're the first!</div>`;
+    } else {
+      const medals = ['🥇','🥈','🥉'];
+      listEl.innerHTML = '';
+      scores.forEach(r => {
+        const isMe = r.uid === uid;
+        const div  = document.createElement('div');
+        div.className = 'lb-row' + (isMe ? ' lb-me' : '');
+        div.innerHTML = `
+          <div class="lb-rank">${medals[r.rank-1] || r.rank}</div>
+          <div class="lb-name">${_escHtml(r.name)}${isMe ? ' (You)' : ''}</div>
+          <div class="lb-score">${Number(r.score).toFixed(2)}</div>
+        `;
+        listEl.appendChild(div);
+      });
+    }
+  }
+
+  // Show overlay
+  overlay.classList.remove('hidden');
+  requestAnimationFrame(() => overlay.classList.add('lb-open'));
+  TG.Haptic.success();
+
+  // Wire close buttons
+  function _closeLb() {
+    overlay.classList.remove('lb-open');
+    setTimeout(() => overlay.classList.add('hidden'), 320);
+    TG.Haptic.select();
+  }
+
+  closeBtn?.addEventListener('click', _closeLb, { once: true });
+  contBtn?.addEventListener('click',  _closeLb, { once: true });
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) _closeLb();
+  }, { once: true });
 }
 
 async function boot() {
