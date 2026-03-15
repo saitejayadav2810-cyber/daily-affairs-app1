@@ -4643,27 +4643,24 @@ body {
 .search-result-item {
   background: var(--surface);
   border: 1px solid var(--glass-border);
+  border-left: 4px solid var(--cyan);
   border-radius: var(--r-lg);
-  padding: 16px 16px 14px 20px;
+  padding: 16px 16px 14px 16px;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: border-color 0.08s, background 0.08s;
   animation: fade-up 0.12s ease both;
   animation-delay: calc(var(--sri, 0) * 0.015s);
   position: relative;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
   gap: 0;
+  height: auto;
+  min-height: 0;
 }
 
 .search-result-item::before {
-  content: '';
-  position: absolute;
-  left: 0; top: 0; bottom: 0;
-  width: 4px;
-  background: linear-gradient(180deg, var(--cyan), #3d5afe);
-  border-radius: 0 2px 2px 0;
+  display: none;
 }
 
 .search-result-item:active {
