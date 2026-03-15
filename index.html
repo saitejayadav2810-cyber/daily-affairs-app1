@@ -496,18 +496,29 @@
          TAB: PROGRESS
     ════════════════════════ -->
     <section class="tab-view" id="view-progress">
-      <div class="page-header">
-        <h2 class="page-title">Progress</h2>
-        <span class="page-subtitle" id="today-date-label">—</span>
+
+      <!-- ── HERO HEADER ── -->
+      <div class="progress-hero">
+        <div class="progress-hero-top">
+          <div class="progress-hero-left">
+            <div class="progress-hero-title">My Progress</div>
+            <div class="progress-hero-date" id="today-date-label">—</div>
+          </div>
+          <div class="progress-hero-badge">
+            <span class="progress-hero-badge-icon">🎯</span>
+            <span class="progress-hero-badge-label">Keep Going</span>
+          </div>
+        </div>
       </div>
 
-      <!-- ── USER COUNT BANNER ── -->
+      <!-- ── SOCIAL PROOF BANNER ── -->
       <div class="user-count-banner" id="user-count-banner">
+        <div class="uc-live-dot"></div>
         <div class="uc-stat">
           <span class="uc-icon">🟢</span>
           <div class="uc-info">
             <span class="uc-val" id="online-count-val">—</span>
-            <span class="uc-lbl">Online Now</span>
+            <span class="uc-lbl">Studying Now</span>
           </div>
         </div>
         <div class="uc-divider"></div>
@@ -515,33 +526,48 @@
           <span class="uc-icon">👥</span>
           <div class="uc-info">
             <span class="uc-val" id="user-count-val">—</span>
-            <span class="uc-lbl">Total Users</span>
+            <span class="uc-lbl">Total Learners</span>
           </div>
         </div>
+        <div class="uc-proof-tag">Join the community →</div>
       </div>
 
       <!-- Stats grid -->
       <div class="stats-grid">
         <div class="stat-card stat-streak">
+          <div class="stat-card-accent"></div>
           <div class="stat-icon">🔥</div>
           <div class="stat-val" id="stat-streak">0</div>
           <div class="stat-label">Day Streak</div>
+          <div class="stat-sublabel">Don't break it!</div>
         </div>
         <div class="stat-card stat-total">
+          <div class="stat-card-accent"></div>
           <div class="stat-icon">📚</div>
           <div class="stat-val" id="stat-total">0</div>
-          <div class="stat-label">Total Seen</div>
+          <div class="stat-label">Total Mastered</div>
+          <div class="stat-sublabel">Questions done</div>
         </div>
         <div class="stat-card stat-saved">
+          <div class="stat-card-accent"></div>
           <div class="stat-icon">🔖</div>
           <div class="stat-val" id="stat-saved">0</div>
           <div class="stat-label">Saved</div>
+          <div class="stat-sublabel">Ready to review</div>
         </div>
         <div class="stat-card stat-days">
-          <div class="stat-icon">📅</div>
+          <div class="stat-card-accent"></div>
+          <div class="stat-icon">⚡</div>
           <div class="stat-val" id="stat-days">0</div>
           <div class="stat-label">Days Active</div>
+          <div class="stat-sublabel">Consistency wins</div>
         </div>
+      </div>
+
+      <!-- ── MOTIVATIONAL BAND ── -->
+      <div class="progress-motto-band">
+        <span class="progress-motto-icon">💡</span>
+        <span class="progress-motto-text">Every card you study puts you ahead of 90% of candidates who don't.</span>
       </div>
 
       <!-- ── DAILY TARGET SETTER ── -->
@@ -590,17 +616,9 @@
         </div>
       </div>
 
-      <!-- Weekly heatmap -->
-      <div class="heatmap-section">
-        <h3 class="section-title">This Week</h3>
-        <div class="heatmap" id="heatmap">
-          <!-- 7 day dots rendered by JS -->
-        </div>
-      </div>
-
       <!-- Category breakdown -->
       <div class="category-section">
-        <h3 class="section-title">By Category</h3>
+        <h3 class="section-title">Strength By Category</h3>
         <div class="category-bars" id="category-bars">
           <!-- Rendered by JS -->
         </div>
