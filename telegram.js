@@ -20,8 +20,21 @@ const TG = (() => {
     // Tell Telegram the app is ready (hides native loading spinner)
     twa.ready();
 
-    // Expand to full height
+    // Expand to full height — covers chat window
     twa.expand();
+
+    // Request true fullscreen (covers status bar) — available in TG v8.0+
+    // Falls back gracefully on older versions
+    if (typeof twa.requestFullscreen === 'function') {
+      twa.requestFullscreen();
+    }
+
+    // Re-request fullscreen if viewport changes (e.g. user minimises and reopens)
+    twa.onEvent('viewportChanged', () => {
+      if (typeof twa.requestFullscreen === 'function' && !twa.isFullscreen) {
+        twa.requestFullscreen();
+      }
+    });
 
     // ── Apply safe-area insets from Telegram SDK (fixes header overlap with status bar) ──
     const _applySafeArea = () => {
