@@ -4642,8 +4642,8 @@ body {
 /* ── Individual result card ── */
 .search-result-item {
   background: var(--surface);
-  border: 1px solid var(--glass-border);
-  border-left: 4px solid var(--cyan);
+  border: 0.3px solid var(--cyan);
+  border-left: 0.3px solid var(--cyan);
   border-radius: var(--r-lg);
   padding: 16px 16px 14px 16px;
   cursor: pointer;
