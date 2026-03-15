@@ -2615,6 +2615,9 @@ function _renderCramView() {
     item.addEventListener('click', () => {
       item.classList.toggle('cram-revealed');
       TG.Haptic.light();
+      // Hide the hint permanently after first tap
+      const hint = container.querySelector('.cram-header-hint');
+      if (hint) hint.style.display = 'none';
     });
 
     container.appendChild(item);
