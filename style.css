@@ -2602,6 +2602,16 @@ body {
 .mode-btn-icon { font-size: 16px; line-height: 1; }
 .mode-btn-label { line-height: 1; }
 
+/* ── Blink-once on app open to draw attention ── */
+.mode-btn-blink {
+  animation: mode-btn-blink-once 0.5s ease-in-out 0.6s 2 alternate both;
+}
+
+@keyframes mode-btn-blink-once {
+  0%   { box-shadow: none; border-color: var(--glass-border); }
+  100% { box-shadow: 0 0 0 3px rgba(0,229,255,0.35); border-color: var(--cyan); }
+}
+
 /* ═══════════════════════════════════════════════════════════════
    CRAM VIEW — scrollable cheat-sheet
    KEY FIX: flex:1 + min-height:0 makes it fill remaining space
