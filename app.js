@@ -4057,7 +4057,11 @@ function _renderSearchResults(query) {
     item.innerHTML = `
       <div class="search-result-category">${_escHtml(q.category || 'General')}</div>
       <div class="search-result-question">${qHtml}</div>
-      <div class="search-result-answer">${aHtml}</div>
+      <div class="search-result-divider"></div>
+      <div class="search-result-answer-wrap">
+        <span class="search-result-answer-label">ANS</span>
+        <span class="search-result-answer">${aHtml}</span>
+      </div>
       <div class="search-result-open-hint">Tap to open as card →</div>
     `;
 
