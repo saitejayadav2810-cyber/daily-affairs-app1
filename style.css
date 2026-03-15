@@ -3249,6 +3249,12 @@ body {
   -webkit-tap-highlight-color: transparent;
   overflow: hidden;
   box-shadow: 0 4px 20px rgba(124,77,255,0.20);
+  animation: mock-glow 2.2s ease-in-out infinite;
+}
+
+@keyframes mock-glow {
+  0%,100% { box-shadow: 0 4px 20px rgba(124,77,255,0.15), 0 0 0 0 rgba(124,77,255,0); }
+  50%      { box-shadow: 0 4px 20px rgba(124,77,255,0.25), 0 0 14px 3px rgba(124,77,255,0.22); }
 }
 
 .mock-cta-btn:active {
