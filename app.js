@@ -4019,21 +4019,64 @@ function _renderSearchResults(query) {
   const qLower = query.toLowerCase();
   const terms  = qLower.split(/\s+/).filter(Boolean);
 
-  // Match if ALL terms appear in question OR answer OR category
-  const matches = State.allQuestions.filter(q => {
+  // ── Auto-fetch mock data if not yet loaded ───────────────────
+  if (MockData.allRows.length === 0) {
+    const url = `https://opensheet.elk.sh/${CONFIG.SPREADSHEET_ID}/MockTests`;
+    if (metaEl) metaEl.innerHTML = '⏳ Loading mock tests…';
+    fetch(url, { cache: 'no-store' })
+      .then(r => r.json())
+      .then(raw => {
+        if (!Array.isArray(raw) || raw.length === 0) return;
+        MockData.allRows = raw.map(r => {
+          const n = {};
+          Object.keys(r).forEach(k => { n[k.toLowerCase().trim()] = String(r[k] ?? '').trim(); });
+          return n;
+        });
+        // Re-run search now that data is loaded
+        _renderSearchResults(query);
+      })
+      .catch(() => {
+        // Silently fall through — show swipe card results only
+        _renderSearchResultsCore(query, terms, metaEl, resultEl);
+      });
+    // Render swipe card results immediately while mock loads
+    _renderSearchResultsCore(query, terms, metaEl, resultEl);
+    return;
+  }
+
+  _renderSearchResultsCore(query, terms, metaEl, resultEl);
+}
+
+function _renderSearchResultsCore(query, terms, metaEl, resultEl) {
+  // ── Search swipe cards ───────────────────────────────────────
+  const cardMatches = State.allQuestions.filter(q => {
     const hay = (q.question + ' ' + q.answer + ' ' + q.category).toLowerCase();
     return terms.every(t => hay.includes(t));
   });
 
+  // ── Search mock test rows ────────────────────────────────────
+  const mockMatches = MockData.allRows.filter(r => {
+    const hay = (
+      (r.question || '') + ' ' +
+      (r.answer   || '') + ' ' +
+      (r.category || '') + ' ' +
+      (r.opt_a || '') + ' ' + (r.opt_b || '') + ' ' +
+      (r.opt_c || '') + ' ' + (r.opt_d || '') + ' ' + (r.opt_e || '')
+    ).toLowerCase();
+    return terms.every(t => hay.includes(t));
+  });
+
+  const total = cardMatches.length + mockMatches.length;
+
   if (metaEl) {
-    metaEl.innerHTML = matches.length > 0
-      ? `<span class="search-meta-highlight">${matches.length}</span> result${matches.length !== 1 ? 's' : ''} for "<strong>${_escHtml(query)}</strong>"`
+    metaEl.innerHTML = total > 0
+      ? `<span class="search-meta-highlight">${total}</span> result${total !== 1 ? 's' : ''} for "<strong>${_escHtml(query)}</strong>"`
       : `No results for "<strong>${_escHtml(query)}</strong>"`;
   }
 
   resultEl.innerHTML = '';
 
-  if (matches.length === 0) {
+  if (total === 0) {
     const noResult = document.createElement('div');
     noResult.className = 'search-empty-state';
     noResult.innerHTML = `
@@ -4045,12 +4088,11 @@ function _renderSearchResults(query) {
     return;
   }
 
-  matches.slice(0, 120).forEach((q, i) => {
+  // ── Render swipe card results ────────────────────────────────
+  cardMatches.slice(0, 100).forEach((q) => {
     const item = document.createElement('div');
     item.className = 'search-result-item';
-    item.style.setProperty('--sri', i);
 
-    // Highlight matched terms in question and answer text
     const qHtml = _highlightTerms(_escHtml(q.question), terms);
     const aHtml = _highlightTerms(_escHtml(q.answer),   terms);
 
@@ -4065,7 +4107,35 @@ function _renderSearchResults(query) {
       <div class="search-result-open-hint">Tap to open as card →</div>
     `;
 
-    item.addEventListener('click', () => _openCardFromSearch(q, matches));
+    item.addEventListener('click', () => _openCardFromSearch(q, cardMatches));
+    resultEl.appendChild(item);
+  });
+
+  // ── Render mock test results ─────────────────────────────────
+  mockMatches.slice(0, 60).forEach((r) => {
+    const item = document.createElement('div');
+    item.className = 'search-result-item';
+
+    const qHtml = _highlightTerms(_escHtml(r.question || ''), terms);
+    const aHtml = _highlightTerms(_escHtml(r.answer   || ''), terms);
+    const cat   = _escHtml(r.category || 'Mock Test');
+    const tno   = r.test_no ? ` · Test ${_escHtml(r.test_no)}` : '';
+
+    item.innerHTML = `
+      <div class="search-result-category" style="display:flex;align-items:center;gap:6px;">
+        ${cat}${tno}
+        <span class="search-mcq-badge">MCQ</span>
+      </div>
+      <div class="search-result-question">${qHtml}</div>
+      <div class="search-result-divider"></div>
+      <div class="search-result-answer-wrap">
+        <span class="search-result-answer-label">ANS</span>
+        <span class="search-result-answer">${aHtml}</span>
+      </div>
+      <div class="search-result-open-hint">Tap to open as card →</div>
+    `;
+
+    item.addEventListener('click', () => _openMockCardFromSearch(r));
     resultEl.appendChild(item);
   });
 }
@@ -4119,6 +4189,55 @@ function _openCardFromSearch(question, allMatches) {
   DOM.actionRow?.classList.remove('hidden');
 
   // Back → subject picker (standard behaviour)
+  TG.pushBack(() => showSubjectPicker());
+
+  _updateDailyProgress();
+  _renderCard(pool[0]);
+}
+
+/** Opens a mock MCQ row as a swipe card. Back → home (subject picker). */
+function _openMockCardFromSearch(mockRow) {
+  TG.Haptic.medium();
+
+  // Convert MCQ row to card-compatible object
+  const card = {
+    id:       mockRow.id || mockRow.question,
+    question: mockRow.question || '',
+    answer:   mockRow.answer   || '',
+    category: mockRow.category || 'Mock Test',
+  };
+
+  // Close search overlay
+  const overlay = document.getElementById('search-overlay');
+  overlay?.classList.add('hidden');
+  TG.popBack();
+
+  // Build pool: this card first, then all swipe questions shuffled
+  const rest = shuffle([...State.allQuestions]);
+  const pool = [card, ...rest];
+
+  State.activeSubject  = '__ALL__';
+  State.currentIndex   = 0;
+  State.sessionSaved   = 0;
+  State.sessionSkipped = 0;
+  State.sessionStack   = [];
+  State.stackPos       = -1;
+  State.dailyCards     = pool;
+
+  if (DOM.activeSubjectName)
+    DOM.activeSubjectName.textContent = 'All Subjects';
+
+  DOM.subjectPicker?.classList.add('hidden');
+  DOM.cardArea?.classList.remove('hidden');
+
+  if (DOM.cramView) {
+    DOM.cramView.classList.add('hidden');
+    DOM.cramView.innerHTML = '';
+  }
+  DOM.cardArena?.classList.remove('hidden');
+  DOM.actionRow?.classList.remove('hidden');
+
+  // Back → home (subject picker) directly
   TG.pushBack(() => showSubjectPicker());
 
   _updateDailyProgress();
