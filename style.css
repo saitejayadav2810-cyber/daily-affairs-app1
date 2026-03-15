@@ -1148,6 +1148,149 @@ body {
   padding-bottom: 80px;
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   PROGRESS TAB — REDESIGNED
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Hero header ── */
+.progress-hero {
+  padding: 20px 16px 12px;
+  flex-shrink: 0;
+}
+
+.progress-hero-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.progress-hero-title {
+  font-family: var(--font-display);
+  font-size: 30px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+}
+
+.progress-hero-date {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.progress-hero-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  background: linear-gradient(135deg, rgba(0,229,255,0.10), rgba(61,90,254,0.12));
+  border: 1px solid rgba(0,229,255,0.25);
+  border-radius: var(--r-md);
+  padding: 8px 14px;
+}
+
+.progress-hero-badge-icon { font-size: 20px; line-height: 1; }
+.progress-hero-badge-label {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--cyan);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+/* ── Social proof banner ── */
+.user-count-banner {
+  display: flex;
+  align-items: center;
+  margin: 0 16px 10px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, rgba(0,230,118,0.07) 0%, rgba(0,229,255,0.06) 100%);
+  border: 1px solid rgba(0,230,118,0.25);
+  border-radius: var(--r-lg);
+  flex-shrink: 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.user-count-banner::before {
+  content: '';
+  position: absolute;
+  top: -30px; right: -30px;
+  width: 100px; height: 100px;
+  background: radial-gradient(circle, rgba(0,230,118,0.08), transparent 70%);
+  pointer-events: none;
+}
+
+.uc-live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--green);
+  box-shadow: 0 0 6px rgba(0,230,118,0.8);
+  position: absolute;
+  top: 10px; left: 14px;
+  animation: live-blink 1.4s ease-in-out infinite;
+}
+
+.uc-stat {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  justify-content: center;
+}
+
+.uc-icon {
+  font-size: 22px;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.uc-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.uc-val {
+  font-family: var(--font-display);
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--green);
+  line-height: 1;
+}
+
+.uc-lbl {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.uc-divider {
+  width: 1px;
+  height: 40px;
+  background: rgba(255,255,255,0.08);
+  flex-shrink: 0;
+  margin: 0 8px;
+}
+
+.uc-proof-tag {
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--cyan);
+  position: absolute;
+  bottom: 7px;
+  right: 14px;
+  letter-spacing: 0.3px;
+}
+
+/* ── Stats grid ── */
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1158,22 +1301,37 @@ body {
 .stat-card {
   background: var(--surface);
   border: 1px solid var(--glass-border);
-  border-radius: var(--r-md);
-  padding: 14px 12px;
+  border-radius: var(--r-lg);
+  padding: 16px 12px 12px;
   text-align: center;
   position: relative;
   overflow: hidden;
+  transition: transform 0.1s, border-color 0.1s;
 }
 
+.stat-card:active { transform: scale(0.97); }
+
+/* Coloured top accent bar */
+.stat-card-accent {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 3px;
+  border-radius: 2px 2px 0 0;
+}
+
+.stat-streak .stat-card-accent  { background: linear-gradient(90deg, var(--amber), #FF6D00); }
+.stat-total  .stat-card-accent  { background: linear-gradient(90deg, #3d5afe, #7C4DFF); }
+.stat-saved  .stat-card-accent  { background: linear-gradient(90deg, var(--cyan), #00BCD4); }
+.stat-days   .stat-card-accent  { background: linear-gradient(90deg, var(--green), #00BFA5); }
+
+/* Glow orb */
 .stat-card::before {
   content: '';
   position: absolute;
-  top: -20px;
-  right: -20px;
-  width: 60px;
-  height: 60px;
+  bottom: -20px; right: -20px;
+  width: 70px; height: 70px;
   border-radius: 50%;
-  opacity: 0.08;
+  opacity: 0.07;
 }
 
 .stat-streak::before { background: var(--amber); }
@@ -1181,21 +1339,58 @@ body {
 .stat-saved::before  { background: var(--cyan); }
 .stat-days::before   { background: var(--green); }
 
-.stat-icon  { font-size: 20px; margin-bottom: 5px; }
+.stat-icon  { font-size: 22px; margin-bottom: 6px; }
+
 .stat-val {
   font-family: var(--font-display);
-  font-size: 28px;
+  font-size: 34px;
   font-weight: 800;
   color: var(--text-primary);
   line-height: 1;
 }
+
+.stat-streak .stat-val { color: var(--amber); }
+.stat-total  .stat-val { color: #7986cb; }
+.stat-saved  .stat-val { color: var(--cyan); }
+.stat-days   .stat-val { color: var(--green); }
+
 .stat-label {
-  font-size: 10px;
+  font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   color: var(--text-muted);
+  margin-top: 4px;
+  font-weight: 700;
+}
+
+.stat-sublabel {
+  font-size: 11px;
+  color: var(--text-muted);
   margin-top: 3px;
-  font-weight: 600;
+  font-style: italic;
+  opacity: 0.7;
+}
+
+/* ── Motivational band ── */
+.progress-motto-band {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 10px 16px 4px;
+  padding: 13px 16px;
+  background: linear-gradient(135deg, rgba(61,90,254,0.10) 0%, rgba(124,77,255,0.08) 100%);
+  border: 1px solid rgba(61,90,254,0.25);
+  border-radius: var(--r-lg);
+  border-left: 3px solid #7C4DFF;
+}
+
+.progress-motto-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+
+.progress-motto-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-style: italic;
 }
 
 /* Sections */
@@ -1209,53 +1404,7 @@ body {
   margin-bottom: 14px;
 }
 
-.heatmap-section {
-  padding: 16px 16px 0;
-}
-
-.heatmap {
-  display: flex;
-  gap: 8px;
-}
-
-.heatmap-day {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-}
-
-.heatmap-dot {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--r-sm);
-  background: var(--surface-2);
-  border: 1px solid var(--glass-border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 14px;
-  transition: all 0.3s;
-}
-
-.heatmap-dot.done {
-  background: var(--cyan-dim);
-  border-color: rgba(0,229,255,0.3);
-}
-
-.heatmap-dot.today {
-  border-color: var(--cyan);
-  box-shadow: 0 0 12px var(--cyan-glow);
-}
-
-.heatmap-label {
-  font-size: 10px;
-  color: var(--text-muted);
-  font-weight: 600;
-  letter-spacing: 0.5px;
-}
-
+/* ── Category bars — enhanced ── */
 .category-section {
   padding: 16px 16px 0;
 }
@@ -1263,7 +1412,7 @@ body {
 .category-bars {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 12px;
 }
 
 .cat-bar-row {
@@ -1273,11 +1422,11 @@ body {
 }
 
 .cat-bar-label {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-secondary);
-  width: 90px;
+  width: 96px;
   flex-shrink: 0;
-  font-weight: 500;
+  font-weight: 600;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1285,7 +1434,7 @@ body {
 
 .cat-bar-track {
   flex: 1;
-  height: 6px;
+  height: 7px;
   background: rgba(255,255,255,0.06);
   border-radius: 99px;
   overflow: hidden;
@@ -1295,15 +1444,16 @@ body {
   height: 100%;
   background: linear-gradient(90deg, var(--cyan), #3d5afe);
   border-radius: 99px;
-  transition: width 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  transition: width 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 6px rgba(0,229,255,0.3);
 }
 
 .cat-bar-count {
-  font-size: 11px;
-  color: var(--text-muted);
-  width: 28px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  width: 32px;
   text-align: right;
-  font-weight: 600;
+  font-weight: 700;
 }
 
 .reset-section {
@@ -1649,64 +1799,8 @@ body {
 /* ═══════════════════════════════════════════════════════════════
    USER COUNT BANNER
 ═══════════════════════════════════════════════════════════════ */
-.user-count-banner {
-  display: flex;
-  align-items: center;
-  justify-content: space-evenly;
-  margin: 8px 16px 6px;
-  padding: 12px 16px;
-  background: var(--surface);
-  border: 1px solid var(--glass-border);
-  border-radius: var(--r-md);
-  flex-shrink: 0;
-}
+/* ── user-count-banner styles are defined in the Progress Tab redesign block above ── */
 
-.uc-stat {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 10px;
-  flex: 1;
-  justify-content: center;
-}
-
-.uc-icon {
-  font-size: 20px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.uc-info {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-}
-
-.uc-val {
-  font-family: var(--font-display);
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--cyan);
-  line-height: 1;
-}
-
-.uc-lbl {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--text-muted);
-  letter-spacing: 0.4px;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.uc-divider {
-  width: 1px;
-  height: 36px;
-  background: var(--glass-border);
-  flex-shrink: 0;
-  margin: 0 8px;
-}
 
 /* ═══════════════════════════════════════════════════════════════
    SHARE POPUP  (every 250 cards)
