@@ -406,10 +406,10 @@ body {
 
 .subject-title {
   font-family: var(--font-display);
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
 }
 
 .subject-sub {
