@@ -115,13 +115,13 @@
 
         <!-- ── MODE TOGGLE ── -->
         <div class="mode-toggle-row">
-          <button class="mode-toggle-btn active" id="mode-btn-cram">
-            <span class="mode-btn-icon">📋</span>
-            <span class="mode-btn-label">Cram Mode</span>
-          </button>
-          <button class="mode-toggle-btn" id="mode-btn-swipe">
+          <button class="mode-toggle-btn active mode-btn-blink" id="mode-btn-swipe">
             <span class="mode-btn-icon">🃏</span>
             <span class="mode-btn-label">Swipe Mode</span>
+          </button>
+          <button class="mode-toggle-btn mode-btn-blink" id="mode-btn-cram">
+            <span class="mode-btn-icon">📋</span>
+            <span class="mode-btn-label">Cram Mode</span>
           </button>
         </div>
 
@@ -359,10 +359,10 @@
             </div>
 
             <!-- Overlays -->
-            <div class="swipe-overlay swipe-right" id="overlay-right"><span>⏭ Skip</span></div>
-            <div class="swipe-overlay swipe-left"  id="overlay-left"><span>⏭ Skip</span></div>
-            <div class="swipe-overlay swipe-up"    id="overlay-up"><span>🔖 Save</span></div>
-            <div class="swipe-overlay swipe-down"  id="overlay-down"><span>👇 Reveal Answer</span></div>
+            <div class="swipe-overlay swipe-right" id="overlay-right"></div>
+            <div class="swipe-overlay swipe-left"  id="overlay-left"></div>
+            <div class="swipe-overlay swipe-up"    id="overlay-up"></div>
+            <div class="swipe-overlay swipe-down"  id="overlay-down"></div>
           </div>
         </div>
 
