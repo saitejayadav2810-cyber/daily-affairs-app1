@@ -38,7 +38,7 @@ const CONFIG = {
   //      { "rules": { ".read": true, ".write": true } }
   //   5. Copy the URL shown (e.g. https://agrimets-default-rtdb.firebaseio.com)
   //   6. Paste it below — NO trailing slash
-  FB_URL: '',   // ← e.g. 'https://agrimets-default-rtdb.firebaseio.com'
+  FB_URL: 'https://agrimets-a3c9c-default-rtdb.firebaseio.com',   // Firebase Realtime Database
 };
 
 // ════════════════════════════════════════════════════════════════
