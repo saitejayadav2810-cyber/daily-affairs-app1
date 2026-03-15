@@ -73,7 +73,7 @@ let State = {
   activeSubject:   null,    // null = show subject picker
   sessionStack:    [],      // Cards seen this session in order [{card, index}]
   stackPos:        -1,      // Current position in sessionStack (-1 = tip)
-  cramMode:        true,    // true = Cram Mode (scrollable list), false = Swipe Mode
+  cramMode:        false,   // true = Cram Mode (scrollable list), false = Swipe Mode
 
   // ── Sprint Mode ──────────────────────────────────────────────
   sprintMode:         false, // True while 50-card sprint is active
@@ -708,11 +708,11 @@ function _renderCard(question, skipStack) {
       const overlayLeftEl  = DOM.overlayLeft;
 
       if (State.sprintMode) {
-        if (overlayRightEl) overlayRightEl.innerHTML = '<span>✓ Know It</span>';
-        if (overlayLeftEl)  overlayLeftEl.innerHTML  = '<span>✗ Don\'t Know</span>';
+        if (overlayRightEl) overlayRightEl.innerHTML = '';
+        if (overlayLeftEl)  overlayLeftEl.innerHTML  = '';
       } else {
-        if (overlayRightEl) overlayRightEl.innerHTML = '<span>⏭ Skip</span>';
-        if (overlayLeftEl)  overlayLeftEl.innerHTML  = '<span>⏭ Skip</span>';
+        if (overlayRightEl) overlayRightEl.innerHTML = '';
+        if (overlayLeftEl)  overlayLeftEl.innerHTML  = '';
       }
 
       SwipeEngine.init(DOM.activeCard, {
