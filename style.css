@@ -4649,14 +4649,12 @@ body {
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: border-color 0.08s, background 0.08s;
-  animation: fade-up 0.12s ease both;
-  animation-delay: calc(var(--sri, 0) * 0.015s);
-  position: relative;
   display: flex;
   flex-direction: column;
   gap: 0;
-  height: auto;
-  min-height: 0;
+  flex-shrink: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .search-result-item::before {
