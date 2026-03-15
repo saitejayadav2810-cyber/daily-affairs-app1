@@ -3376,7 +3376,7 @@ function _openCategoryTests(cat) {
     })
     .map(([testNo, questions]) => ({
       testNo,
-      name: `${cat.key} — Test ${testNo}`,
+      name: `${testNo}`,
       questions,
     }));
 
