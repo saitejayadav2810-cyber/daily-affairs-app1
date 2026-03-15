@@ -560,9 +560,13 @@ function markSeen(questionId) {
   if (!seen.includes(questionId)) {
     seen.push(questionId);
     ls_set(LS.SEEN_IDS, seen);
-    // Check if we hit a share milestone (every 250 cards)
-    try { _checkShareMilestone(seen.length); } catch(e) {}
   }
+
+  // ── Cumulative swipe counter (never resets, used for share milestones) ──
+  const totalSwiped = (ls_get('dca_total_swiped', 0) || 0) + 1;
+  ls_set('dca_total_swiped', totalSwiped);
+  try { _checkShareMilestone(totalSwiped); } catch(e) {}
+
   _updateStats();
 }
 
