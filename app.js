@@ -2214,6 +2214,38 @@ function _showChannelPopup() {
 const FB_ONLINE_TTL_MS = 3 * 60 * 1000;  // 3 min — considered "online"
 const LB_MAX_ROWS      = 10;
 
+// ── Identity helpers ──────────────────────────────────────────
+//  These are required by all Firebase functions.
+
+/** Returns a stable anonymous UID for this device.
+ *  On first call generates a random ID and persists it to localStorage. */
+function _getOrCreateUid() {
+  const KEY = 'dca_uid';
+  let uid = localStorage.getItem(KEY);
+  if (!uid) {
+    // Crypto-random 16-byte hex string
+    uid = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    localStorage.setItem(KEY, uid);
+  }
+  return uid;
+}
+
+/** Returns the best available display name for the user:
+ *  Telegram first_name → username → stored name → "Student" */
+function _getUserDisplayName() {
+  const tgUser = TG.getUser?.();
+  if (tgUser?.first_name) {
+    return [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ');
+  }
+  if (tgUser?.username) return '@' + tgUser.username;
+  // Fall back to locally stored name (set during earlier sessions)
+  const stored = localStorage.getItem('dca_display_name');
+  if (stored) return stored;
+  return 'Student';
+}
+
 // ── Low-level Firebase REST helpers ──────────────────────────
 
 /** PATCH (merge) data at a Firebase path */
