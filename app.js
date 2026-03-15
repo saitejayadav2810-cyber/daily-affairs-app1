@@ -1959,9 +1959,48 @@ async function manualRefresh() {
   }
 }
 
+// ════════════════════════════════════════════════════════════════
+//  REPO REFRESH — Forces fresh HTML/JS/CSS from GitHub Pages
+//  Clears all SW caches + browser caches, then hard-reloads.
+//  Called AFTER manualRefresh() so Google Sheets data is already
+//  updated before the page reloads.
+// ════════════════════════════════════════════════════════════════
+
+async function _repoRefresh() {
+  showToast('⚙️ Refreshing app files from server…', 2500);
+
+  try {
+    // 1. Clear ALL Cache Storage entries
+    if ('caches' in window) {
+      const cacheKeys = await caches.keys();
+      await Promise.all(cacheKeys.map(key => caches.delete(key)));
+    }
+
+    // 2. Tell the active service worker to update itself
+    if ('serviceWorker' in navigator) {
+      const regs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(regs.map(reg => reg.update()));
+    }
+  } catch (e) {
+    console.warn('[Repo] Cache/SW clear failed:', e);
+  }
+
+  // 3. Hard reload — appends ?_v=timestamp so GitHub CDN serves fresh files
+  setTimeout(() => {
+    const url = new URL(location.href);
+    url.searchParams.set('_v', Date.now());
+    location.replace(url.toString());
+  }, 1800);
+}
+
 function _initButtons() {
   // ── Update / Refresh data ───────────────────────────────────
-  DOM.tabUpdate?.addEventListener('click', () => manualRefresh());
+  // First: refresh Google Sheets data (existing behaviour, unchanged)
+  // Then:  bust GitHub Pages CDN cache and reload fresh app files
+  DOM.tabUpdate?.addEventListener('click', async () => {
+    await manualRefresh();
+    await _repoRefresh();
+  });
   // ── Back to subject picker ──────────────────────────────────
   DOM.btnBackSubjects?.addEventListener('click', () => {
     if (State.sprintMode) {
