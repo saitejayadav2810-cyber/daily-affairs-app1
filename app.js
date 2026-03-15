@@ -557,15 +557,20 @@ function skipCard(questionId) {
 
 function markSeen(questionId) {
   const seen = ls_get(LS.SEEN_IDS, []);
-  if (!seen.includes(questionId)) {
+  const isNew = !seen.includes(questionId);
+
+  if (isNew) {
     seen.push(questionId);
     ls_set(LS.SEEN_IDS, seen);
-  }
 
-  // ── Cumulative swipe counter (never resets, used for share milestones) ──
-  const totalSwiped = (ls_get('dca_total_swiped', 0) || 0) + 1;
-  ls_set('dca_total_swiped', totalSwiped);
-  try { _checkShareMilestone(totalSwiped); } catch(e) {}
+    // ── Cumulative mastered counter — never resets even when SEEN_IDS resets ──
+    // This is the true "Total Mastered ever" used for share milestones.
+    const cumulative = (ls_get('dca_cumulative_mastered', 0) || 0) + 1;
+    ls_set('dca_cumulative_mastered', cumulative);
+
+    // Fire popup at every 200th genuinely new card (200, 400, 600…)
+    try { _checkShareMilestone(cumulative); } catch(e) {}
+  }
 
   _updateStats();
 }
