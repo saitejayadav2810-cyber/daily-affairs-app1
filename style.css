@@ -37,7 +37,7 @@
   /* Typography */
   --font-display: 'Syne', sans-serif;
   --font-body:    'Lora', serif;
-  --font-title:   'Playfair Display', Georgia, serif;   /* category / test names */
+  --font-title:   'Inter', system-ui, sans-serif;      /* category / test names */
   --font-qa:      'Times New Roman', Times, serif;      /* questions & answers */
 
   /* Spacing */
