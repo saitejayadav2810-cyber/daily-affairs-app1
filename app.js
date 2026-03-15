@@ -1993,6 +1993,50 @@ async function _repoRefresh() {
   }, 1800);
 }
 
+// ════════════════════════════════════════════════════════════════
+//  SHARE CARD  _shareCard(question)
+//  Shares the current card (Q + A) via native share sheet.
+//  Falls back to WhatsApp direct if navigator.share not available.
+// ════════════════════════════════════════════════════════════════
+
+function _shareCard(question) {
+  const text =
+    `📚 *${question.category || 'Agriculture'}*\n\n` +
+    `❓ *Q:* ${question.question}\n\n` +
+    `✅ *Ans:* ${question.answer}\n\n` +
+    `─────────────────────\n` +
+    `🌾 Shared from *AGRIMETS* Swipe Cards\n` +
+    `📲 Study smarter → ${APP_SHARE_URL}`;
+
+  // 1. Try Telegram's own openLink (respects Mini App sandbox)
+  if (window.Telegram?.WebApp?.openTelegramLink) {
+    // Share via Telegram forward — not ideal for cross-app, fall through
+  }
+
+  // 2. Try Web Share API (native OS share sheet — WhatsApp, Telegram, Instagram, etc.)
+  if (navigator.share) {
+    navigator.share({
+      title: 'AGRIMETS — ' + (question.category || 'Agriculture'),
+      text,
+    })
+    .then(() => { TG.Haptic.success(); showToast('Shared! 🎉', 1800); })
+    .catch(() => {}); // user cancelled — do nothing
+    return;
+  }
+
+  // 3. Fallback: open WhatsApp share directly
+  const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
+  try {
+    if (window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(waUrl);
+    } else {
+      window.open(waUrl, '_blank');
+    }
+  } catch (e) {
+    window.open(waUrl, '_blank');
+  }
+}
+
 function _initButtons() {
   // ── Update / Refresh data ───────────────────────────────────
   // First: refresh Google Sheets data (existing behaviour, unchanged)
@@ -2040,8 +2084,8 @@ function _initButtons() {
     if (State.sprintMode) return;
     const q = State.dailyCards[State.currentIndex];
     if (!q) return;
-    TG.Haptic.success();
-    SwipeEngine.triggerSwipe('right');
+    TG.Haptic.medium();
+    _shareCard(q);
   });
 
   // ── Sprint: button-row Know It / Don't Know ────────────────
