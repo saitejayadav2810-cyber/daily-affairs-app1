@@ -73,7 +73,7 @@ let State = {
   activeSubject:   null,    // null = show subject picker
   sessionStack:    [],      // Cards seen this session in order [{card, index}]
   stackPos:        -1,      // Current position in sessionStack (-1 = tip)
-  cramMode:        false,   // true = Cram Mode (scrollable list), false = Swipe Mode
+  cramMode:        true,    // true = Cram Mode (scrollable list), false = Swipe Mode
 
   // ── Sprint Mode ──────────────────────────────────────────────
   sprintMode:         false, // True while 50-card sprint is active
