@@ -2638,7 +2638,16 @@ body {
   font-weight: 700;
   color: var(--cyan);
 }
-.cram-header-hint { font-size: 11px; color: var(--text-muted); }
+.cram-header-hint {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--cyan);
+  background: rgba(0,229,255,0.10);
+  border: 1px solid rgba(0,229,255,0.25);
+  border-radius: 99px;
+  padding: 4px 12px;
+  letter-spacing: 0.2px;
+}
 
 /* Q&A row */
 .cram-item {
@@ -3230,24 +3239,36 @@ body {
   display: flex;
   align-items: center;
   gap: 14px;
-  background: linear-gradient(135deg, rgba(255,109,0,0.18) 0%, rgba(255,171,0,0.14) 100%);
-  border: 1.5px solid rgba(255,171,0,0.50);
+  background: var(--surface-2);
+  border: none;
   border-radius: var(--r-lg);
-  padding: 16px 18px;
+  padding: 0;
   cursor: pointer;
   transition: all 0.10s;
   -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.3);
 }
 
 .mock-cta-btn:active {
   transform: scale(0.97);
-  box-shadow: 0 0 24px rgba(255,171,0,0.25);
+}
+
+/* Left accent stripe */
+.mock-cta-btn::before {
+  content: '';
+  display: block;
+  width: 5px;
+  min-width: 5px;
+  align-self: stretch;
+  background: linear-gradient(180deg, #FF6D00, var(--amber));
+  flex-shrink: 0;
 }
 
 .mock-icon {
-  font-size: 28px;
+  font-size: 26px;
   flex-shrink: 0;
-  filter: drop-shadow(0 0 8px rgba(255,171,0,0.5));
+  padding: 16px 0 16px 4px;
 }
 
 .mock-text {
@@ -3256,29 +3277,31 @@ body {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  padding: 16px 0;
 }
 
 .mock-text strong {
   font-family: var(--font-display);
   font-size: 17px;
   font-weight: 800;
-  color: var(--amber);
-  letter-spacing: -0.4px;
+  color: var(--text-primary);
+  letter-spacing: -0.2px;
   line-height: 1.2;
 }
 
 .mock-text span {
-  font-size: 11px;
-  color: rgba(255,171,0,0.65);
+  font-size: 12px;
+  color: var(--text-muted);
   font-weight: 500;
 }
 
 .mock-arrow {
-  font-size: 18px;
+  font-size: 22px;
   color: var(--amber);
-  opacity: 0.7;
   font-weight: 700;
   flex-shrink: 0;
+  padding-right: 16px;
+  opacity: 1;
 }
 
 /* ── Mock Test List View ── */
