@@ -35,7 +35,7 @@
   --text-muted:   #5c6bc0;
 
   /* Typography */
-  --font-display: 'Syne', sans-serif;
+  --font-display: 'DM Sans', system-ui, sans-serif;
   --font-body:    'Lora', serif;
   --font-title:   'Inter', system-ui, sans-serif;      /* category / test names */
   --font-qa:      'Times New Roman', Times, serif;      /* questions & answers */
@@ -1330,6 +1330,54 @@ body {
   font-size: 11px;
   color: var(--text-muted);
   margin-top: 8px;
+  margin-bottom: 20px;
+}
+
+/* ── Update button in Progress tab ── */
+.update-progress-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 20px;
+  background: linear-gradient(135deg, rgba(0,229,255,0.10) 0%, rgba(61,90,254,0.10) 100%);
+  border: 1.5px solid rgba(0,229,255,0.35);
+  border-radius: var(--r-md);
+  color: var(--cyan);
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.1s;
+  margin-bottom: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.update-progress-btn:active {
+  background: rgba(0,229,255,0.18);
+  transform: scale(0.98);
+}
+
+.update-progress-btn.updating {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.update-progress-btn.updating .update-progress-icon {
+  display: inline-block;
+  animation: spin-update 0.8s linear infinite;
+}
+
+.update-progress-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.update-progress-warning {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 20px;
 }
 
 /* ═══════════════════════════════════════════════════════════════
