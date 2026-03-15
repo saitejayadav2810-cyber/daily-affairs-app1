@@ -2636,7 +2636,7 @@ const MOCK_SCHEDULE = [
   { catNorm: 'test series',   unlockHour: 20 },
   { catNorm: 'nimraj sunday', unlockHour: 21 },
 ];
-const SUNDAY_MEGA_HOUR  = 22;   // 10 PM every Sunday
+const SUNDAY_MEGA_HOUR  = 11;   // 11 AM every Sunday
 const SUNDAY_MEGA_COUNT = 60;   // questions per Sunday Mega Test
 
 // ── Emoji auto-assign by category name keyword ───────────────
