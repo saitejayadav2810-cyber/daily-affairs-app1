@@ -21,7 +21,7 @@
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Lora:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
   <!-- Cache-busting: appends ?v=timestamp so browser always loads latest file -->
   <script>
@@ -96,8 +96,8 @@
         <span class="tab-icon">🕐</span>
         <span class="tab-label">History</span>
       </button>
-      <button class="tab-btn update-tab-btn" id="tab-update">
-        <span class="tab-icon update-icon" id="update-icon">🔄</span>
+      <button class="tab-btn update-tab-btn" style="display:none">
+        <span class="tab-icon update-icon">🔄</span>
         <span class="tab-label">Update</span>
       </button>
     </nav>
@@ -608,6 +608,11 @@
 
       <!-- Reset button -->
       <div class="reset-section">
+        <button class="update-progress-btn" id="tab-update">
+          <span class="update-progress-icon" id="update-icon">🔄</span>
+          <span>Refresh App &amp; Data</span>
+        </button>
+        <p class="update-progress-warning">Fetches latest questions &amp; app files</p>
         <button class="reset-btn" id="btn-reset">↺ Reset Progress</button>
         <p class="reset-warning">This will clear all local data</p>
       </div>
