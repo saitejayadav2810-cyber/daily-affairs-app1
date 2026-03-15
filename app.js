@@ -3875,6 +3875,7 @@ async function boot() {
   _initDailyTarget();
   _initMockButtons();
   _initSundayMegaBanner();
+  _initSearch();
 
   // 7. Dismiss splash — always runs, even if earlier steps errored
   const _dismissSplash = () => {
@@ -3936,6 +3937,188 @@ function exportToWhatsApp() {
   } catch (e) {
     window.open(waUrl, '_blank');
   }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  SEARCH FEATURE
+//  ▸ Searches all questions by keyword
+//  ▸ Shows results as a cram-style list with answers revealed
+//  ▸ Tapping a result opens it as a swipe card in All Subjects mode
+// ════════════════════════════════════════════════════════════════
+
+function _initSearch() {
+  const openBtn   = document.getElementById('btn-open-search');
+  const closeBtn  = document.getElementById('btn-close-search');
+  const clearBtn  = document.getElementById('btn-clear-search');
+  const input     = document.getElementById('search-input');
+  const overlay   = document.getElementById('search-overlay');
+
+  if (!openBtn || !overlay) return;
+
+  // Open
+  openBtn.addEventListener('click', () => {
+    overlay.classList.remove('hidden');
+    TG.Haptic.light();
+    TG.pushBack(() => _closeSearch());
+    setTimeout(() => input?.focus(), 120);
+  });
+
+  // Close
+  closeBtn?.addEventListener('click', () => _closeSearch());
+
+  // Clear input
+  clearBtn?.addEventListener('click', () => {
+    if (input) { input.value = ''; input.focus(); }
+    clearBtn.classList.add('hidden');
+    _renderSearchResults('');
+    TG.Haptic.light();
+  });
+
+  // Live search on input
+  let _searchTimer = null;
+  input?.addEventListener('input', () => {
+    const q = input.value.trim();
+    clearBtn?.classList.toggle('hidden', !q);
+    clearTimeout(_searchTimer);
+    _searchTimer = setTimeout(() => _renderSearchResults(q), 180);
+  });
+
+  input?.addEventListener('keydown', e => {
+    if (e.key === 'Escape') _closeSearch();
+  });
+}
+
+function _closeSearch() {
+  const overlay = document.getElementById('search-overlay');
+  const input   = document.getElementById('search-input');
+  overlay?.classList.add('hidden');
+  if (input) input.value = '';
+  document.getElementById('btn-clear-search')?.classList.add('hidden');
+  _renderSearchResults('');
+  TG.popBack();
+}
+
+function _renderSearchResults(query) {
+  const metaEl    = document.getElementById('search-meta');
+  const resultEl  = document.getElementById('search-results');
+  const emptyEl   = document.getElementById('search-empty-state');
+
+  if (!resultEl) return;
+
+  if (!query) {
+    // Reset to empty state
+    resultEl.innerHTML = '';
+    if (emptyEl) {
+      emptyEl.style.display = '';
+      resultEl.appendChild(emptyEl);
+    }
+    if (metaEl) metaEl.innerHTML = '';
+    return;
+  }
+
+  const qLower = query.toLowerCase();
+  const terms  = qLower.split(/\s+/).filter(Boolean);
+
+  // Match if ALL terms appear in question OR answer OR category
+  const matches = State.allQuestions.filter(q => {
+    const hay = (q.question + ' ' + q.answer + ' ' + q.category).toLowerCase();
+    return terms.every(t => hay.includes(t));
+  });
+
+  if (metaEl) {
+    metaEl.innerHTML = matches.length > 0
+      ? `<span class="search-meta-highlight">${matches.length}</span> result${matches.length !== 1 ? 's' : ''} for "<strong>${_escHtml(query)}</strong>"`
+      : `No results for "<strong>${_escHtml(query)}</strong>"`;
+  }
+
+  resultEl.innerHTML = '';
+
+  if (matches.length === 0) {
+    const noResult = document.createElement('div');
+    noResult.className = 'search-empty-state';
+    noResult.innerHTML = `
+      <div class="search-empty-icon">😕</div>
+      <p class="search-empty-title">No matches found</p>
+      <p class="search-empty-sub">Try different keywords or check spelling</p>
+    `;
+    resultEl.appendChild(noResult);
+    return;
+  }
+
+  matches.slice(0, 120).forEach((q, i) => {
+    const item = document.createElement('div');
+    item.className = 'search-result-item';
+    item.style.setProperty('--sri', i);
+
+    // Highlight matched terms in question and answer text
+    const qHtml = _highlightTerms(_escHtml(q.question), terms);
+    const aHtml = _highlightTerms(_escHtml(q.answer),   terms);
+
+    item.innerHTML = `
+      <div class="search-result-category">${_escHtml(q.category || 'General')}</div>
+      <div class="search-result-question">${qHtml}</div>
+      <div class="search-result-answer">${aHtml}</div>
+      <div class="search-result-open-hint">Tap to open as card →</div>
+    `;
+
+    item.addEventListener('click', () => _openCardFromSearch(q, matches));
+    resultEl.appendChild(item);
+  });
+}
+
+/** Wraps each matched term in a highlight span */
+function _highlightTerms(html, terms) {
+  let result = html;
+  terms.forEach(term => {
+    const esc = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const re  = new RegExp(`(${esc})`, 'gi');
+    result = result.replace(re, '<span class="search-highlight">$1</span>');
+  });
+  return result;
+}
+
+/** Opens the tapped search result as a swipe card in All Subjects context */
+function _openCardFromSearch(question, allMatches) {
+  TG.Haptic.medium();
+
+  // Close search overlay first
+  const overlay = document.getElementById('search-overlay');
+  overlay?.classList.add('hidden');
+  TG.popBack();
+
+  // Build pool: tapped question first, rest of ALL questions after (shuffled)
+  const rest = shuffle(State.allQuestions.filter(q => q.id !== question.id));
+  const pool = [question, ...rest];
+
+  // Set up state as if user selected All Subjects
+  State.activeSubject  = '__ALL__';
+  State.currentIndex   = 0;
+  State.sessionSaved   = 0;
+  State.sessionSkipped = 0;
+  State.sessionStack   = [];
+  State.stackPos       = -1;
+  State.dailyCards     = pool;
+
+  // Label the deck
+  if (DOM.activeSubjectName)
+    DOM.activeSubjectName.textContent = 'All Subjects';
+
+  // Show card area in SWIPE mode (always, regardless of cramMode setting)
+  DOM.subjectPicker?.classList.add('hidden');
+  DOM.cardArea?.classList.remove('hidden');
+
+  if (DOM.cramView) {
+    DOM.cramView.classList.add('hidden');
+    DOM.cramView.innerHTML = '';
+  }
+  DOM.cardArena?.classList.remove('hidden');
+  DOM.actionRow?.classList.remove('hidden');
+
+  // Back → subject picker (standard behaviour)
+  TG.pushBack(() => showSubjectPicker());
+
+  _updateDailyProgress();
+  _renderCard(pool[0]);
 }
 
 // ── Wait for DOM ──────────────────────────────────────────────
