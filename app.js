@@ -2637,7 +2637,7 @@ const MOCK_SCHEDULE = [
   { catNorm: 'nimraj sunday', unlockHour: 21 },
 ];
 const SUNDAY_MEGA_HOUR  = 11;   // 11 AM every Sunday
-const SUNDAY_MEGA_COUNT = 60;   // questions per Sunday Mega Test
+const SUNDAY_MEGA_COUNT = 100;  // questions per Sunday Mega Test
 
 // ── Emoji auto-assign by category name keyword ───────────────
 const _CAT_EMOJI_MAP = [
@@ -2940,6 +2940,12 @@ function _initSundayMegaBanner() {
 
     if (isLive && !banner.classList.contains('smb-live')) {
       // Just flipped live — full re-render
+      _renderSundayMegaBanner();
+      return;
+    }
+
+    if (!isLive && banner.classList.contains('smb-live')) {
+      // Midnight passed — Sunday ended, reset banner to countdown
       _renderSundayMegaBanner();
       return;
     }
