@@ -2615,9 +2615,12 @@ function _renderCramView() {
     item.addEventListener('click', () => {
       item.classList.toggle('cram-revealed');
       TG.Haptic.light();
-      // Hide the hint permanently after first tap
+      // Show hint only when no cards are revealed, hide as soon as any is revealed
       const hint = container.querySelector('.cram-header-hint');
-      if (hint) hint.style.display = 'none';
+      if (hint) {
+        const anyRevealed = container.querySelectorAll('.cram-revealed').length > 0;
+        hint.style.display = anyRevealed ? 'none' : '';
+      }
     });
 
     container.appendChild(item);
