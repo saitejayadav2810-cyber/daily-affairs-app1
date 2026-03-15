@@ -2455,8 +2455,8 @@ function _animateCount(el, target) {
   requestAnimationFrame(tick);
 }
 
-const APP_SHARE_URL  = 'https://t.me/Agrimets_bot';
-const APP_SHARE_TEXT = '🌾 I\'m using AGRIMETS Swipe Cards to prepare for agriculture exams! 📚\n\nJoin me and ace your exams 👇\nhttps://t.me/Agrimets_bot';
+const APP_SHARE_URL  = 'https://t.me/Agrimets_bot/agrimets';
+const APP_SHARE_TEXT = '🌾 I\'m using AGRIMETS Swipe Cards to prepare for agriculture exams! 📚\n\nJoin me and ace your exams 👇\nhttps://t.me/Agrimets_bot/agrimets';
 const SHARE_INTERVAL = 200; // Show popup every N cards
 
 function _checkShareMilestone(totalSeen) {
@@ -3962,7 +3962,7 @@ function exportToWhatsApp() {
   TG.Haptic.medium();
 
   const header  = '📚 *My AGRIMETS Revision Notes*';
-  const footer  = '\n⚡ Practised via Agrimets Mini App\n🔗 t.me/agrimets_bot';
+  const footer  = '\n⚡ Practised via Agrimets Mini App\n🔗 t.me/Agrimets_bot/agrimets';
 
   const body = saved.map((item, i) =>
     `🔸 *Q${i + 1}:* ${item.question}\n🔹 *A:* ${item.answer}${item.category ? `\n📂 ${item.category}` : ''}`
